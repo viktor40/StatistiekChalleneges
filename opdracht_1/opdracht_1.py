@@ -114,7 +114,6 @@ def matrix_vermenigvuldiging(r, theta, phi):
                    afgeleide_phi(r, theta, phi)]))
 
     CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
-
     """
     Breakdown einsum:
     Transponeer A:
@@ -172,6 +171,7 @@ def coordinaattransformatie():
                         mpatches.Patch(color='red', label='y'),
                         mpatches.Patch(color='blue', label='z')
                         ], loc='upper right')
+
     plt.xlabel('Coordinaat'), plt.ylabel('Waarschijnlijkheidsdichtheid')
     plt.title('Histogrammen van de cartesische coördinaten')
     plt.savefig('plots/xyz_histogrammen.pdf')
@@ -185,19 +185,19 @@ def coordinaattransformatie():
     plt.savefig('plots/xyz_spreiding.pdf')
     plt.clf()
 
-    plt.scatter(punten_cartesisch[0], punten_cartesisch[1], marker='.')
+    plt.scatter(punten_cartesisch[0], punten_cartesisch[1], marker='.', color='orange')
     plt.xlabel('x-waarden'), plt.ylabel('y-waarden')
     plt.title('De spreiding van de x en y waarden.')
     plt.savefig('plots/xy_spreiding.pdf')
     plt.clf()
 
-    plt.scatter(punten_cartesisch[1], punten_cartesisch[2], marker='.')
+    plt.scatter(punten_cartesisch[1], punten_cartesisch[2], marker='.', color='orange',)
     plt.xlabel('y-waarden'), plt.ylabel('z-waarden')
     plt.title('De spreiding van de x en y waarden.')
     plt.savefig('plots/yz_spreiding.pdf')
     plt.clf()
 
-    plt.scatter(punten_cartesisch[2], punten_cartesisch[0], marker='.')
+    plt.scatter(punten_cartesisch[2], punten_cartesisch[0], marker='.', color='orange')
     plt.xlabel('z-waarden'), plt.ylabel('x-waarden')
     plt.title('De spreiding van de z en x waarden.')
     plt.savefig('plots/zx_spreoding.pdf')
