@@ -93,9 +93,8 @@ def matrix_vermenigvuldiging(r, theta, phi):
         [dy/dr, dy/dt, dy/dp]
         [dz/dr, dz/dt, dz/dp]]
 
-    De array B is ook een 504 x 3 x 3 array. Hierin is elke 3x3 array de getransponeerde matrix van de matrices in A.
     Uiteindelijk wordt de matrixverminigvuldiging uitgevoerd door gebruik te maken van de Einstein sommatie. Hiermee
-    wordt een for loop vermeden.
+    wordt een for loop vermeden. In de einsum() wordt A ook getransponeerd.
 
     Ten slotte pickelen we de geresulteerde array. Hierdoor kan hij makkelijk weer opgeroepen worden om te gebruiken
     tijdens het plotten zonder dat hij opnieuw berekend moet worden.
@@ -109,9 +108,7 @@ def matrix_vermenigvuldiging(r, theta, phi):
                                 afgeleide_theta(r, theta, phi),
                                 afgeleide_phi(r, theta, phi)])))
 
-    B = np.transpose(A, axes=(0, 2, 1))
-
-    CX = np.einsum('ijk, kl, ilm -> ijm', A, CR, B)
+    CX = np.einsum('ijk, kl, iml -> ijm', A, CR, A)
     outfile = open("covariantiematrix_geen_correlaties", 'wb')
     pickle.dump(CX, outfile)
     outfile.close()
