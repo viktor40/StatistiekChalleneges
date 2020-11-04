@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pickle
+import time
 
 # ---- Constanten ----
 # de fouten op r, theta en sigma
@@ -87,14 +88,18 @@ def afgeleide_phi(r, theta, phi):
 def matrix_vermenigvuldiging(r, theta, phi):
     """
     Deze functie implementeert de formule voor de foutenpropagatie als matrix vermenigvuldiging.
-    Eerst wordt een array A gecreëerd. Deze array A zal een 504 x 3 x 3 array zijn. Elke 3 x 3 matrix in deze array
-    stelt de volgende matrix voor:
-    A = [[dx/dr, dx/dt, dx/dp]
+    Eerst wordt een array A gecreëerd. Deze array A zal een 3 x 3 x 504 array zijn.
+    Idien men A transponeerd wordt dit een 504 x 3 x 3 array waar elke 3 x 3 matrix in deze array de volgende matrix
+    voorstelt:
+    M = [[dx/dr, dx/dt, dx/dp]
         [dy/dr, dy/dt, dy/dp]
         [dz/dr, dz/dt, dz/dp]]
 
-    Uiteindelijk wordt de matrixverminigvuldiging uitgevoerd door gebruik te maken van de Einstein sommatie. Hiermee
-    wordt een for loop vermeden. In de einsum() wordt A ook getransponeerd.
+    We vermenigvuldigen deze matrix M met CR en dan met zijn getransponeerde M.T
+    Dit gebeurd voor elke 3x3 matrix in de 504 x 3 x 3 array, zodat we weer een 504 x 3 x 3 array terug krijgen
+    waarbij elke 3 x 3 matrix de covariantiematrix CX van die coördinaat voorstelt.
+
+    Al deze bewerkingen worden via een einsum gedaan aangezien dit veel tijd bespaart.
 
     Ten slotte pickelen we de geresulteerde array. Hierdoor kan hij makkelijk weer opgeroepen worden om te gebruiken
     tijdens het plotten zonder dat hij opnieuw berekend moet worden.
@@ -104,11 +109,40 @@ def matrix_vermenigvuldiging(r, theta, phi):
     :param phi: een 504 x 1 array met hierin alle waarden voor phi
     :return:
     """
-    A = np.transpose(np.array(([afgeleide_r(r, theta, phi),
-                                afgeleide_theta(r, theta, phi),
-                                afgeleide_phi(r, theta, phi)])))
+    A = np.array(([afgeleide_r(r, theta, phi),
+                   afgeleide_theta(r, theta, phi),
+                   afgeleide_phi(r, theta, phi)]))
 
-    CX = np.einsum('ijk, kl, iml -> ijm', A, CR, A)
+    CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
+
+    """
+    Breakdown einsum:
+    Transponeer A:
+    np.einsum(kji) of np.einsum(ijk -> kji)
+    
+    Hierein is A al getransponeerd
+    i is de as waarlangs de 3x3 matrices staan.
+    dus als X die 3x3 matrices zijn is een element hiering X_jk
+    We vermenigvuldigen elke van deze X matrix mat CR jk, kl wat betekent dat we de rij van X met de kolom van CR
+    vermenigvuldigen, i.e. matrixvermenigvuldiging.
+    
+    het resulterende van deze eerste vermenigvuldiging zal dan ijl zijn. Dan vermenigvuldigen we deze l matrix.
+    de derde matrix zou eigenlijk ilm zijn, maar deze zal de getransponeerde van de interne matrix van A moeten zijn.
+    ilm wordt dus iml wat deze interne matrix vermenigvuldigd of:  np.einsum(iml) of np.einsum(ilm -> iml).
+    Dus vermenigvuldigen we opniew de rij met de kolom van deze getransponeerde. Dat is wat de volgende betekent.
+    CX = np.einsum('ijk, kl, iml -> ijm', A, CR, A) 
+    
+    Indien we dit alles samen zetten krijgen we:
+    CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
+    """
+
+    """
+    performance boost with einsum:
+    np.einsum('kji, kl, lmi -> ijm', A, CR, A) -> 0.00010899999999969268 s
+    A = A.T & CX = np.einsum('ijk, kl, iml -> ijm', A, CR, A) -> 0.00017989999999983958 s
+    for loop -> 0.002914499999999931 s
+    """
+
     outfile = open("covariantiematrix_geen_correlaties", 'wb')
     pickle.dump(CX, outfile)
     outfile.close()
