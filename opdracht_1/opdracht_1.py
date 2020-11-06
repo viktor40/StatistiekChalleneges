@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pickle
-import time
+
 
 # ---- Constanten ----
 # de fouten op r, theta en sigma
@@ -147,6 +147,15 @@ def matrix_vermenigvuldiging(r, theta, phi):
     outfile.close()
 
 
+def plot_coord_2d(x, y, assen, color):
+    plt.scatter(x, y, marker='.', color=color)
+    plt.xlabel('{}-waarden'.format(assen[0])), plt.ylabel('{}-waarden'.format(assen[1]))
+    plt.title('De spreiding van de {} en {} waarden.'.format(assen[0], assen[1]))
+    plt.savefig('plots/deel1/{}_spreiding.pdf'.format(assen))
+    plt.clf()
+
+
+
 def coordinaattransformatie():
     """
     Deze functie bevat de code voor het uitvoeren van de coordinaattransformatie. Deze werd in een functie gezet
@@ -160,6 +169,7 @@ def coordinaattransformatie():
     Deze functie plot ook de XYZ putnen in 3D. Ten slotte worden plotjes gemaakt met de spreiding voor XY, YZ en ZX
     """
 
+    # Histogrammen van X, Y en Z
     punten_cartesisch = sferisch_to_cartesisch(data[0], data[1], data[2])
     plt.hist(punten_cartesisch[0], bins=30, density=True, alpha=0.25, color='green', histtype='bar')
     plt.hist(punten_cartesisch[0], bins=30, density=True, alpha=1, color='green', histtype='step')
@@ -174,46 +184,91 @@ def coordinaattransformatie():
 
     plt.xlabel('Coordinaat'), plt.ylabel('Waarschijnlijkheidsdichtheid')
     plt.title('Histogrammen van de cartesische coördinaten')
-    plt.savefig('plots/xyz_histogrammen.pdf')
+    plt.savefig('plots/deel1/xyz_histogrammen.pdf')
     plt.clf()
 
+    # XYZ scatterplot
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.scatter(punten_cartesisch[0], punten_cartesisch[1], punten_cartesisch[2], depthshade=True, marker='x')
     ax.set_xlabel('X-waarden'), ax.set_ylabel('Y-waarden'), ax.set_zlabel('Z-waarden')
     ax.set_title('De spreiding van de cartesische coordinaten.')
-    plt.savefig('plots/xyz_spreiding.pdf')
+    plt.savefig('plots/deel1/xyz_spreiding.pdf')
     plt.clf()
 
-    plt.scatter(punten_cartesisch[0], punten_cartesisch[1], marker='.', color='orange')
-    plt.xlabel('x-waarden'), plt.ylabel('y-waarden')
-    plt.title('De spreiding van de x en y waarden.')
-    plt.savefig('plots/xy_spreiding.pdf')
+    # XY scatterplot
+    plot_coord_2d(punten_cartesisch[0], punten_cartesisch[1], assen='xy', color='green')
+
+    # YZ scatterplot
+    plot_coord_2d(punten_cartesisch[1], punten_cartesisch[2], assen='yz', color='red')
+
+    # ZX scatterplot
+    plot_coord_2d(punten_cartesisch[2], punten_cartesisch[0], assen='zx', color='blue')
+
+
+def plot_fouten(x_waarde, y_waardes, systematische_fout, spherische_coord):
+    plt.scatter(x_waarde, y_waardes[0], marker='.', color='royalblue', label='x')
+    plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='y')
+    plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='z')
+    plt.xlabel('{} coördinaten'.format(spherische_coord)), plt.ylabel('x, y en z coördinaten')
+    plt.title('De fouten van de x, y en z coordinaten in functie van {}.'.format(spherische_coord))
+    plt.legend()
+    plt.savefig('plots/{}/fout_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
+                                                  spherische_coord),
+                bbox_inches="tight")
     plt.clf()
 
-    plt.scatter(punten_cartesisch[1], punten_cartesisch[2], marker='.', color='orange',)
-    plt.xlabel('y-waarden'), plt.ylabel('z-waarden')
-    plt.title('De spreiding van de x en y waarden.')
-    plt.savefig('plots/yz_spreiding.pdf')
+
+def plot_correlaties(x_waarde, y_waardes, systematische_fout, spherische_coord):
+    plt.scatter(x_waarde, y_waardes[0], marker='.', color='royalblue', label='xy')
+    plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='yz')
+    plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='zx')
+    plt.xlabel('{} coördinaten'.format(spherische_coord))
+    plt.ylabel('de correlaties tussen xy, yz en zx'.format(spherische_coord))
+    plt.title('De correlaties tussen de xy, yz en zx in functie van {}.'.format(spherische_coord))
+    plt.legend()
+    plt.savefig('plots/{}/correlaties_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
+                                                         spherische_coord),
+                bbox_inches="tight")
     plt.clf()
 
-    plt.scatter(punten_cartesisch[2], punten_cartesisch[0], marker='.', color='orange')
-    plt.xlabel('z-waarden'), plt.ylabel('x-waarden')
-    plt.title('De spreiding van de z en x waarden.')
-    plt.savefig('plots/zx_spreoding.pdf')
-    plt.clf()
 
+def plot_cov(cov_matrices, systematische_fout):
+    cov_per_coordinaat = np.transpose(cov_matrices, (1, 2, 0))
 
-def plot_cov():
-    inputfile = open("covariantiematrix_geen_correlaties", 'rb')
-    cov_matrices = pickle.load(inputfile)
+    fout_x = cov_per_coordinaat[0][0]
+    fout_y = cov_per_coordinaat[1][1]
+    fout_z = cov_per_coordinaat[2][2]
+    cov_xy = cov_per_coordinaat[0][1]
+    cov_yz = cov_per_coordinaat[1][2]
+    cov_zx = cov_per_coordinaat[2][0]
+
+    corr_xy = cov_xy / np.sqrt(fout_x * fout_y)
+    corr_yz = cov_yz / np.sqrt(fout_y * fout_z)
+    corr_zx = cov_zx / np.sqrt(fout_z * fout_x)
+
+    r = data[0]
+    theta = data[1]
+    phi = data[2]
+
+    # plots van de fouten in functie van de spherische coordinaten
+    plot_fouten(r, (fout_x, fout_y, fout_z), systematische_fout, 'r')
+    plot_fouten(theta, (fout_x, fout_y, fout_z), systematische_fout, 'theta')
+    plot_fouten(phi, (fout_x, fout_y, fout_z), systematische_fout, 'phi')
+
+    # plots van de correlaties in functie van de sferische coordinaten
+    plot_correlaties(r, (corr_xy, corr_yz, corr_zx), systematische_fout, 'r')
+    plot_correlaties(theta, (corr_xy, corr_yz, corr_zx), systematische_fout, 'theta')
+    plot_correlaties(phi, (corr_xy, corr_yz, corr_zx), systematische_fout, 'phi')
 
 
 # voor de coordinaattransformatie uit
-coordinaattransformatie()
+# coordinaattransformatie()
 
 # bereken de covariantiematrices
-matrix_vermenigvuldiging(data[0], data[1], data[2])
+# matrix_vermenigvuldiging(data[0], data[1], data[2])
 
 # plot de covariantiematrices
-plot_cov()
+inputfile = open("covariantiematrix_geen_correlaties", 'rb')
+cov_matrices = pickle.load(inputfile)
+plot_cov(cov_matrices, systematische_fout=False)
