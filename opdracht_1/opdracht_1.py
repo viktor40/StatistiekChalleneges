@@ -85,7 +85,7 @@ def afgeleide_phi(r, theta, phi):
     return np.array([dx_dp, dy_dp, dz_dp])
 
 
-def matrix_vermenigvuldiging(r, theta, phi):
+def matrix_vermenigvuldiging(r, theta, phi, systematische_fout):
     """
     Deze functie implementeert de formule voor de foutenpropagatie als matrix vermenigvuldiging.
     Eerst wordt een array A gecreëerd. Deze array A zal een 3 x 3 x 504 array zijn.
@@ -113,38 +113,16 @@ def matrix_vermenigvuldiging(r, theta, phi):
                    afgeleide_theta(r, theta, phi),
                    afgeleide_phi(r, theta, phi)]))
 
-    CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
-    """
-    Breakdown einsum:
-    Transponeer A:
-    np.einsum(kji) of np.einsum(ijk -> kji)
-    
-    Hierein is A al getransponeerd
-    i is de as waarlangs de 3x3 matrices staan.
-    dus als X die 3x3 matrices zijn is een element hiering X_jk
-    We vermenigvuldigen elke van deze X matrix mat CR jk, kl wat betekent dat we de rij van X met de kolom van CR
-    vermenigvuldigen, i.e. matrixvermenigvuldiging.
-    
-    het resulterende van deze eerste vermenigvuldiging zal dan ijl zijn. Dan vermenigvuldigen we deze l matrix.
-    de derde matrix zou eigenlijk ilm zijn, maar deze zal de getransponeerde van de interne matrix van A moeten zijn.
-    ilm wordt dus iml wat deze interne matrix vermenigvuldigd of:  np.einsum(iml) of np.einsum(ilm -> iml).
-    Dus vermenigvuldigen we opniew de rij met de kolom van deze getransponeerde. Dat is wat de volgende betekent.
-    CX = np.einsum('ijk, kl, iml -> ijm', A, CR, A) 
-    
-    Indien we dit alles samen zetten krijgen we:
-    CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
-    """
-
-    """
-    performance boost with einsum:
-    np.einsum('kji, kl, lmi -> ijm', A, CR, A) -> 0.00010899999999969268 s
-    A = A.T & CX = np.einsum('ijk, kl, iml -> ijm', A, CR, A) -> 0.00017989999999983958 s
-    for loop -> 0.002914499999999931 s
-    """
-
-    outfile = open("covariantiematrix_geen_correlaties", 'wb')
-    pickle.dump(CX, outfile)
-    outfile.close()
+    if not systematische_fout:
+        CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
+        outfile = open("covariantiematrix_geen_correlaties", 'wb')
+        pickle.dump(CX, outfile)
+        outfile.close()
+    else:
+        CX = np.einsum('kji, kl, lmi -> ijm', A, CR_S, A)
+        outfile = open("covariantiematrix_systematische_fout", 'wb')
+        pickle.dump(CX, outfile)
+        outfile.close()
 
 
 def plot_coord_2d(x, y, assen, color):
@@ -153,7 +131,6 @@ def plot_coord_2d(x, y, assen, color):
     plt.title('De spreiding van de {} en {} waarden.'.format(assen[0], assen[1]))
     plt.savefig('plots/deel1/{}_spreiding.pdf'.format(assen))
     plt.clf()
-
 
 
 def coordinaattransformatie():
@@ -211,11 +188,11 @@ def plot_fouten(x_waarde, y_waardes, systematische_fout, spherische_coord):
     plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='y')
     plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='z')
     plt.xlabel('{} coördinaten'.format(spherische_coord)), plt.ylabel('x, y en z coördinaten')
-    plt.title('De fouten van de x, y en z coordinaten in functie van {}.'.format(spherische_coord))
+    plt.title('De fouten van de x, y en z coordinaten in functie van {}.'.format(spherische_coord,
+                                                                                 ' met systematische fout' if systematische_fout else ''))
     plt.legend()
     plt.savefig('plots/{}/fout_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
-                                                  spherische_coord),
-                bbox_inches="tight")
+                                                  spherische_coord), bbox_inches="tight")
     plt.clf()
 
 
@@ -225,11 +202,11 @@ def plot_correlaties(x_waarde, y_waardes, systematische_fout, spherische_coord):
     plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='zx')
     plt.xlabel('{} coördinaten'.format(spherische_coord))
     plt.ylabel('de correlaties tussen xy, yz en zx'.format(spherische_coord))
-    plt.title('De correlaties tussen de xy, yz en zx in functie van {}.'.format(spherische_coord))
+    plt.title('De correlaties in functie van {}{}.'.format(spherische_coord,
+                                                           ' met systematische fout' if systematische_fout else ''))
     plt.legend()
     plt.savefig('plots/{}/correlaties_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
-                                                         spherische_coord),
-                bbox_inches="tight")
+                                                         spherische_coord), bbox_inches="tight")
     plt.clf()
 
 
@@ -263,12 +240,18 @@ def plot_cov(cov_matrices, systematische_fout):
 
 
 # voor de coordinaattransformatie uit
-# coordinaattransformatie()
+coordinaattransformatie()
 
 # bereken de covariantiematrices
-# matrix_vermenigvuldiging(data[0], data[1], data[2])
+matrix_vermenigvuldiging(data[0], data[1], data[2], systematische_fout=False)
 
 # plot de covariantiematrices
 inputfile = open("covariantiematrix_geen_correlaties", 'rb')
 cov_matrices = pickle.load(inputfile)
 plot_cov(cov_matrices, systematische_fout=False)
+
+# plot de covariantiematrices met systematische fout
+matrix_vermenigvuldiging(data[0], data[1], data[2], systematische_fout=True)
+inputfile = open("covariantiematrix_systematische_fout", 'rb')
+cov_matrices = pickle.load(inputfile)
+plot_cov(cov_matrices, systematische_fout=True)
