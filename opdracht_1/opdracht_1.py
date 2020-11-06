@@ -1,3 +1,24 @@
+"""
+17/11/2020
+
+Python Challenges Statistiek en Gegevensverwerking
+Opdracht 1
+Groep 4: Viktor Van Nieuwenhuize
+         Aiko Decaluwe
+         Fien Dewit
+         Isabelle Vanderhaeghen
+
+Indeling .py bestand:
+    1. imports
+    2. constanten
+    3. functies voor berekeningen
+    4. functies voor plotten
+    5. Uitvoeren van juiste functies per deelopdracht
+
+Indien een parameter van een functie geen np.array([]) is, wordt deze meestal gebruikt om aan te duiden voor wat de
+functie wordt gebruikt. Voor duidelijkheid weren in dat geval type hints gebruikt bij de parameters.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -15,8 +36,8 @@ CR = np.array([[SIGMA_R ** 2, 0, 0],
 
 # de covariantiematrix voor de sferische coordinaten met systematische fouten
 CR_S = np.array([[SIGMA_R ** 2, 0, 0],
-               [0, SIGMA_THETA ** 2 + 0.01 ** 2, 0],
-               [0, 0.01 ** 2, SIGMA_PHI ** 2 + 0.01 ** 2]])
+                 [0, SIGMA_THETA ** 2 + 0.01 ** 2, 0.01 ** 2],
+                 [0, 0.01 ** 2, SIGMA_PHI ** 2 + 0.01 ** 2]])
 
 
 # Laadt de dataset in als een numpy array. Hierna wordt de data getransponeerd. Dit wordt gedaan zodat alle
@@ -34,6 +55,7 @@ def sferisch_to_cartesisch(r, theta, phi):
     :param phi: een 504 x 1 array met hierin alle waarden voor phi
     :return: een 504 x 3 array. Elke 1 x 3 matrix bevat x, y en z, m.a.w 1 cartesische coordinaat.
     """
+
     x = r * np.sin(theta) * np.cos(phi)
     y = r * np.sin(theta) * np.sin(phi)
     z = r * np.cos(theta)
@@ -85,12 +107,13 @@ def afgeleide_phi(r, theta, phi):
     return np.array([dx_dp, dy_dp, dz_dp])
 
 
-def matrix_vermenigvuldiging(r, theta, phi, systematische_fout):
+def matrix_vermenigvuldiging(systematische_fout: bool):
     """
     Deze functie implementeert de formule voor de foutenpropagatie als matrix vermenigvuldiging.
     Eerst wordt een array A gecreëerd. Deze array A zal een 3 x 3 x 504 array zijn.
-    Idien men A transponeerd wordt dit een 504 x 3 x 3 array waar elke 3 x 3 matrix in deze array de volgende matrix
-    voorstelt:
+
+    Idien men A transponeerd wordt dit een 504 x 3 x 3 array waarin elke 3 x 3 matrix de vorm heeft van de
+    volgende matrix:
     M = [[dx/dr, dx/dt, dx/dp]
         [dy/dr, dy/dt, dy/dp]
         [dz/dr, dz/dt, dz/dp]]
@@ -99,33 +122,53 @@ def matrix_vermenigvuldiging(r, theta, phi, systematische_fout):
     Dit gebeurd voor elke 3x3 matrix in de 504 x 3 x 3 array, zodat we weer een 504 x 3 x 3 array terug krijgen
     waarbij elke 3 x 3 matrix de covariantiematrix CX van die coördinaat voorstelt.
 
-    Al deze bewerkingen worden via een einsum gedaan aangezien dit veel tijd bespaart.
+    Al deze bewerkingen worden via een einsum gedaan aangezien dit veel tijd bespaart. Al deze bewerkingen in één
+    keer uitvoeren levert het voordeel op dat er slechts 1 keer over alle waarden moet worden geïtereerd.
 
     Ten slotte pickelen we de geresulteerde array. Hierdoor kan hij makkelijk weer opgeroepen worden om te gebruiken
     tijdens het plotten zonder dat hij opnieuw berekend moet worden.
 
-    :param r: een 504 x 1 array met hierin alle waarden voor r
-    :param theta: een 504 x 1 array met hierin alle waarden voor theta
-    :param phi: een 504 x 1 array met hierin alle waarden voor phi
+    :param systematische_fout: Als deze parameter True is wordt de covariantiematrix met systematische fout voor de
+           spherische coordinaten berekend.
     :return:
     """
+
+    # de sferische coordinaten als 1 x 504 array
+    r = data[0]
+    theta = data[1]
+    phi = data[2]
+
+    # stel de matrix op om te gebruiken in de matrixvermenigvuldiging
     A = np.array(([afgeleide_r(r, theta, phi),
                    afgeleide_theta(r, theta, phi),
                    afgeleide_phi(r, theta, phi)]))
 
+    # pas de einsum toe om de uiteindelijke covariantiematrices te verkrijgen als 508 x 3 x 3 array.
     if not systematische_fout:
+        # Wanneer er geen systematische fout is gebruiken we CR.
         CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
         outfile = open("covariantiematrix_geen_correlaties", 'wb')
         pickle.dump(CX, outfile)
         outfile.close()
+
     else:
+        # Wanneer er wel een systematische fout is gebruiken we CR_S
         CX = np.einsum('kji, kl, lmi -> ijm', A, CR_S, A)
         outfile = open("covariantiematrix_systematische_fout", 'wb')
         pickle.dump(CX, outfile)
         outfile.close()
 
 
-def plot_coord_2d(x, y, assen, color):
+def plot_coord_2d(x, y, assen: str, color: str):
+    """
+    Deze functie plot de 2D projecties van de cartesische coordinaten.
+    :param x: De x waarden voor het plot
+    :param y: De y waarden voor het plot
+    :param assen: De assen die het vlak maken waarop de data wordt geprojecteerd
+    :param color: Het kleur voor de punten op het scatterplot
+    :return:
+    """
+
     plt.scatter(x, y, marker='.', color=color)
     plt.xlabel('{}-waarden'.format(assen[0])), plt.ylabel('{}-waarden'.format(assen[1]))
     plt.title('De spreiding van de {} en {} waarden.'.format(assen[0], assen[1]))
@@ -156,8 +199,8 @@ def coordinaattransformatie():
     plt.hist(punten_cartesisch[2], bins=30, density=True, alpha=1, color='blue', histtype='step')
     plt.legend(handles=[mpatches.Patch(color='green', label='x'),
                         mpatches.Patch(color='red', label='y'),
-                        mpatches.Patch(color='blue', label='z')
-                        ], loc='upper right')
+                        mpatches.Patch(color='blue', label='z')],
+               loc='upper right')
 
     plt.xlabel('Coordinaat'), plt.ylabel('Waarschijnlijkheidsdichtheid')
     plt.title('Histogrammen van de cartesische coördinaten')
@@ -183,20 +226,42 @@ def coordinaattransformatie():
     plot_coord_2d(punten_cartesisch[2], punten_cartesisch[0], assen='zx', color='blue')
 
 
-def plot_fouten(x_waarde, y_waardes, systematische_fout, spherische_coord):
+def plot_fouten(x_waarde, y_waardes, systematische_fout: bool, spherische_coord: str):
+    """
+    Deze functie kan gebruikt worden voor het plotten van de fouten op de cartesische coördinaten in functie van
+    de sferische coördinaten.
+
+    :param x_waarde: Een numpy array met de waarden voor de cartesische coordinaat
+    :param y_waardes: Een tupel met 3 arrays van de waarden voor de cartesische coordinaten x, y en z respectievelijk.
+    :param systematische_fout: Of de covariantiematrix van de sferische coordinaten die gebruikt werd al dan niet een
+                               systematische fout had
+    :param spherische_coord: In functie van welke sferische coordinaat de cartesische coordinaten geplot worden.
+                             Deze variabele wordt gebruikt voor de labels en file names.
+    """
     plt.scatter(x_waarde, y_waardes[0], marker='.', color='royalblue', label='x')
     plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='y')
     plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='z')
     plt.xlabel('{} coördinaten'.format(spherische_coord)), plt.ylabel('x, y en z coördinaten')
     plt.title('De fouten van de x, y en z coordinaten in functie van {}.'.format(spherische_coord,
                                                                                  ' met systematische fout' if systematische_fout else ''))
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.savefig('plots/{}/fout_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
                                                   spherische_coord), bbox_inches="tight")
     plt.clf()
 
 
-def plot_correlaties(x_waarde, y_waardes, systematische_fout, spherische_coord):
+def plot_correlaties(x_waarde, y_waardes, systematische_fout: bool, spherische_coord: str):
+    """
+    Deze functie kan gebruikt worden voor het plotten van de correlaties tussen de cartesische coördinaten in functie van
+    de sferische coördinaten.
+
+    :param x_waarde: Een numpy array met de waarden voor de cartesische coordinaat
+    :param y_waardes: Een tupel met 3 arrays van de waarden voor de cartesische coordinaten x, y en z respectievelijk.
+    :param systematische_fout: Of de covariantiematrix van de sferische coordinaten die gebruikt werd al dan niet een
+                               systematische fout had
+    :param spherische_coord: In functie van welke sferische coordinaat de cartesische coordinaten geplot worden.
+                             Deze variabele wordt gebruikt voor de labels en file names.
+    """
     plt.scatter(x_waarde, y_waardes[0], marker='.', color='royalblue', label='xy')
     plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='yz')
     plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='zx')
@@ -204,15 +269,46 @@ def plot_correlaties(x_waarde, y_waardes, systematische_fout, spherische_coord):
     plt.ylabel('de correlaties tussen xy, yz en zx'.format(spherische_coord))
     plt.title('De correlaties in functie van {}{}.'.format(spherische_coord,
                                                            ' met systematische fout' if systematische_fout else ''))
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.savefig('plots/{}/correlaties_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
                                                          spherische_coord), bbox_inches="tight")
     plt.clf()
 
 
-def plot_cov(cov_matrices, systematische_fout):
-    cov_per_coordinaat = np.transpose(cov_matrices, (1, 2, 0))
+def plot_cov(matrices, systematische_fout: bool):
+    """
+    In deze functie wordt het plotten van de waarden in de covariantiematrix uitgevoerd, zowel met als zonder
+    systematische fouten. Eerst wordt de 503 x 3 x 3 array getransponeerd tot 3 x 3 x 504 array zodat we door
+    de array te indexeren makkelijk alle waarden voor een bepaalde covariantie krijgen. Het is dan eenvoudig om de
+    1 x 504 arrays door te geven aan de plotfuncties om te gebruiken tijdens het plotten.
 
+    Na het transponeren heeft cov_per_coordinaat de vorm:
+    [[ [Cov_XX_1, Cov_XX_2, ... , Cov_XX_508],
+       [Cov_XY_1, Cov_XY_2, ... , Cov_XY_508],
+       [Cov_XZ_1, Cov_XZ_2, ... , Cov_XZ_508]]
+
+     [ [Cov_YX_1, Cov_YX_2, ... , Cov_YX_508],
+       [Cov_YY_1, Cov_YY_2, ... , Cov_YY_508],
+       [Cov_YZ_1, Cov_YZ_2, ... , Cov_YZ_508]]
+
+     [ [Cov_ZX_1, Cov_ZX_2, ... , Cov_ZX_508],
+       [Cov_ZY_1, Cov_ZY_2, ... , Cov_ZY_508],
+       [Cov_ZZ_1, Cov_ZZ_2, ... , Cov_ZZ_508]]
+
+    Cov_XX, Cov_YY en Cov_ZZ zijn dan de fouten.
+
+    Voor de correlaties worden de niet diagonaalelementen gebruikt. Aangezien de covariantiematrix symmetrisch is
+    maat het niet uit of we bijvoorbeeld Cov_XY of Cov_YX gebruiken. Deze covariantie wordt dan gedeeld door de
+    vierkantswortel van het product van de fouten om de correlatie te bepalen.
+    vb: Corr_XY = Cov_XY / sqrt(Cov_XX * Cov_YY)
+
+    :param matrices: De 504 x 3 x 3 array die werd berekend in de matrix_vermenigvuldiging functie
+    :param systematische_fout: Of de covariantiematrix van de sferische coordinaten die gebruikt werd al dan niet een
+                               systematische fout had.
+    """
+    cov_per_coordinaat = np.transpose(matrices, (1, 2, 0))
+
+    # haal de 1 x 504 arrays uit de array om te gebruiken bij het plotten
     fout_x = cov_per_coordinaat[0][0]
     fout_y = cov_per_coordinaat[1][1]
     fout_z = cov_per_coordinaat[2][2]
@@ -220,10 +316,12 @@ def plot_cov(cov_matrices, systematische_fout):
     cov_yz = cov_per_coordinaat[1][2]
     cov_zx = cov_per_coordinaat[2][0]
 
+    # bereken de correlaties
     corr_xy = cov_xy / np.sqrt(fout_x * fout_y)
     corr_yz = cov_yz / np.sqrt(fout_y * fout_z)
     corr_zx = cov_zx / np.sqrt(fout_z * fout_x)
 
+    # de waarden voor de sferische coordinaten
     r = data[0]
     theta = data[1]
     phi = data[2]
@@ -239,19 +337,21 @@ def plot_cov(cov_matrices, systematische_fout):
     plot_correlaties(phi, (corr_xy, corr_yz, corr_zx), systematische_fout, 'phi')
 
 
-# voor de coordinaattransformatie uit
+# voor de coordinaattransformatie uit (Puntje 2.1)
 coordinaattransformatie()
 
-# bereken de covariantiematrices
-matrix_vermenigvuldiging(data[0], data[1], data[2], systematische_fout=False)
+# bereken de covariantiematrices (Puntje 2.2 en 2.3)
+matrix_vermenigvuldiging(systematische_fout=False)
 
-# plot de covariantiematrices
+# plot de covariantiematrices (Puntje 3)
 inputfile = open("covariantiematrix_geen_correlaties", 'rb')
 cov_matrices = pickle.load(inputfile)
+inputfile.close()
 plot_cov(cov_matrices, systematische_fout=False)
 
-# plot de covariantiematrices met systematische fout
-matrix_vermenigvuldiging(data[0], data[1], data[2], systematische_fout=True)
+# plot de covariantiematrices met systematische fout (Puntje 4)
+matrix_vermenigvuldiging(systematische_fout=True)
 inputfile = open("covariantiematrix_systematische_fout", 'rb')
 cov_matrices = pickle.load(inputfile)
+inputfile.close()
 plot_cov(cov_matrices, systematische_fout=True)
