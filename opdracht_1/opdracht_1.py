@@ -19,6 +19,7 @@ Indien een parameter van een functie geen np.array([]) is, wordt deze meestal ge
 functie wordt gebruikt. Voor duidelijkheid weren in dat geval type hints gebruikt bij de parameters.
 """
 
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -40,7 +41,7 @@ CR_S = np.array([[SIGMA_R ** 2, 0, 0],
                  [0, 0.01 ** 2, SIGMA_PHI ** 2 + 0.01 ** 2]])
 
 
-# Laadt de dataset in als een numpy array. Hierna wordt de data getransponeerd. Dit wordt gedaan zodat alle
+# Laadt de dataset als een numpy array. Hierna wordt de data getransponeerd. Dit wordt gedaan zodat alle
 # r, theta en phi waarden dan in dezelfde subarray zitten. r = data[0], theta = data[1] en phi = data[2].
 punten_sferisch = np.loadtxt('./punten_sferisch.dat')
 data = np.transpose(punten_sferisch)
@@ -115,8 +116,8 @@ def matrix_vermenigvuldiging(systematische_fout: bool):
     Idien men A transponeerd wordt dit een 504 x 3 x 3 array waarin elke 3 x 3 matrix de vorm heeft van de
     volgende matrix:
     M = [[dx/dr, dx/dt, dx/dp]
-        [dy/dr, dy/dt, dy/dp]
-        [dz/dr, dz/dt, dz/dp]]
+         [dy/dr, dy/dt, dy/dp]
+         [dz/dr, dz/dt, dz/dp]]
 
     We vermenigvuldigen deze matrix M met CR en dan met zijn getransponeerde M.T
     Dit gebeurd voor elke 3x3 matrix in de 504 x 3 x 3 array, zodat we weer een 504 x 3 x 3 array terug krijgen
@@ -283,17 +284,17 @@ def plot_cov(matrices, systematische_fout: bool):
     1 x 504 arrays door te geven aan de plotfuncties om te gebruiken tijdens het plotten.
 
     Na het transponeren heeft cov_per_coordinaat de vorm:
-    [[ [Cov_XX_1, Cov_XX_2, ... , Cov_XX_508],
-       [Cov_XY_1, Cov_XY_2, ... , Cov_XY_508],
-       [Cov_XZ_1, Cov_XZ_2, ... , Cov_XZ_508]]
+    [[[Cov_XX_1, Cov_XX_2, ... , Cov_XX_508],
+      [Cov_XY_1, Cov_XY_2, ... , Cov_XY_508],
+      [Cov_XZ_1, Cov_XZ_2, ... , Cov_XZ_508]]
 
-     [ [Cov_YX_1, Cov_YX_2, ... , Cov_YX_508],
-       [Cov_YY_1, Cov_YY_2, ... , Cov_YY_508],
-       [Cov_YZ_1, Cov_YZ_2, ... , Cov_YZ_508]]
+     [[Cov_YX_1, Cov_YX_2, ... , Cov_YX_508],
+      [Cov_YY_1, Cov_YY_2, ... , Cov_YY_508],
+      [Cov_YZ_1, Cov_YZ_2, ... , Cov_YZ_508]]
 
-     [ [Cov_ZX_1, Cov_ZX_2, ... , Cov_ZX_508],
-       [Cov_ZY_1, Cov_ZY_2, ... , Cov_ZY_508],
-       [Cov_ZZ_1, Cov_ZZ_2, ... , Cov_ZZ_508]]
+     [[Cov_ZX_1, Cov_ZX_2, ... , Cov_ZX_508],
+      [Cov_ZY_1, Cov_ZY_2, ... , Cov_ZY_508],
+      [Cov_ZZ_1, Cov_ZZ_2, ... , Cov_ZZ_508]]
 
     Cov_XX, Cov_YY en Cov_ZZ zijn dan de fouten.
 
@@ -340,14 +341,17 @@ def plot_cov(matrices, systematische_fout: bool):
 # voor de coordinaattransformatie uit (Puntje 2.1)
 coordinaattransformatie()
 
+
 # bereken de covariantiematrices (Puntje 2.2 en 2.3)
 matrix_vermenigvuldiging(systematische_fout=False)
+
 
 # plot de covariantiematrices (Puntje 3)
 inputfile = open("covariantiematrix_geen_correlaties", 'rb')
 cov_matrices = pickle.load(inputfile)
 inputfile.close()
 plot_cov(cov_matrices, systematische_fout=False)
+
 
 # plot de covariantiematrices met systematische fout (Puntje 4)
 matrix_vermenigvuldiging(systematische_fout=True)
