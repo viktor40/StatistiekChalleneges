@@ -42,7 +42,7 @@ CR_S = np.array([[SIGMA_R ** 2, 0, 0],
 
 
 # Laadt de dataset als een numpy array. Hierna wordt de data getransponeerd. Dit wordt gedaan zodat alle
-# r, theta en phi waarden dan in dezelfde subarray zitten. r = data[0], theta = data[1] en phi = data[2].
+# r, theta en phi waarden dan in dezelfde subarray zitten, i.e. r = data[0], theta = data[1] en phi = data[2].
 punten_sferisch = np.loadtxt('./punten_sferisch.dat')
 data = np.transpose(punten_sferisch)
 
@@ -63,10 +63,9 @@ def sferisch_to_cartesisch(r, theta, phi):
     return np.array([x, y, z])
 
 
-def afgeleide_r(r, theta, phi):
+def afgeleide_r(theta, phi):
     """
     x, y en z afleiden naar r.
-    :param r: een 504 x 1 array met hierin alle waarden voor r
     :param theta: een 504 x 1 array met hierin alle waarden voor theta
     :param phi: een 504 x 1 array met hierin alle waarden voor phi
     :return: een 504 x 3 array. Elke 1 x 3 matrix bevat de afgeleide van x, y en z naar r voor een coordinaat.
@@ -140,7 +139,7 @@ def matrix_vermenigvuldiging(systematische_fout: bool):
     phi = data[2]
 
     # stel de matrix op om te gebruiken in de matrixvermenigvuldiging
-    A = np.array(([afgeleide_r(r, theta, phi),
+    A = np.array(([afgeleide_r(theta, phi),
                    afgeleide_theta(r, theta, phi),
                    afgeleide_phi(r, theta, phi)]))
 
@@ -243,8 +242,7 @@ def plot_fouten(x_waarde, y_waardes, systematische_fout: bool, spherische_coord:
     plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='y')
     plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='z')
     plt.xlabel('{} coördinaten'.format(spherische_coord)), plt.ylabel('x, y en z coördinaten')
-    plt.title('De fouten van de x, y en z coordinaten in functie van {}.'.format(spherische_coord,
-                                                                                 ' met systematische fout' if systematische_fout else ''))
+    plt.title('De fouten van de x, y en z coordinaten in functie van {}{}.'.format(spherische_coord, ' met systematische fout' if systematische_fout else ''))
     plt.legend(loc='upper right')
     plt.savefig('plots/{}/fout_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
                                                   spherische_coord), bbox_inches="tight")
@@ -253,8 +251,8 @@ def plot_fouten(x_waarde, y_waardes, systematische_fout: bool, spherische_coord:
 
 def plot_correlaties(x_waarde, y_waardes, systematische_fout: bool, spherische_coord: str):
     """
-    Deze functie kan gebruikt worden voor het plotten van de correlaties tussen de cartesische coördinaten in functie van
-    de sferische coördinaten.
+    Deze functie kan gebruikt worden voor het plotten van de correlaties tussen de cartesische coördinaten in functie
+    van de sferische coördinaten.
 
     :param x_waarde: Een numpy array met de waarden voor de cartesische coordinaat
     :param y_waardes: Een tupel met 3 arrays van de waarden voor de cartesische coordinaten x, y en z respectievelijk.
@@ -269,7 +267,7 @@ def plot_correlaties(x_waarde, y_waardes, systematische_fout: bool, spherische_c
     plt.xlabel('{} coördinaten'.format(spherische_coord))
     plt.ylabel('de correlaties tussen xy, yz en zx'.format(spherische_coord))
     plt.title('De correlaties in functie van {}{}.'.format(spherische_coord,
-                                                           ' met systematische fout' if systematische_fout else ''))
+                                                           '\nmet systematische fout' if systematische_fout else ''))
     plt.legend(loc='upper right')
     plt.savefig('plots/{}/correlaties_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
                                                          spherische_coord), bbox_inches="tight")
