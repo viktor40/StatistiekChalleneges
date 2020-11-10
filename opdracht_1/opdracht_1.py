@@ -130,7 +130,6 @@ def matrix_vermenigvuldiging(systematische_fout: bool):
 
     :param systematische_fout: Als deze parameter True is wordt de covariantiematrix met systematische fout voor de
            spherische coordinaten berekend.
-    :return:
     """
 
     # de sferische coordinaten als 1 x 504 array
@@ -166,7 +165,6 @@ def plot_coord_2d(x, y, assen: str, color: str):
     :param y: De y waarden voor het plot
     :param assen: De assen die het vlak maken waarop de data wordt geprojecteerd
     :param color: Het kleur voor de punten op het scatterplot
-    :return:
     """
 
     plt.scatter(x, y, marker='.', color=color)
@@ -294,12 +292,12 @@ def plot_cov(matrices, systematische_fout: bool):
       [Cov_ZY_1, Cov_ZY_2, ... , Cov_ZY_508],
       [Cov_ZZ_1, Cov_ZZ_2, ... , Cov_ZZ_508]]
 
-    Cov_XX, Cov_YY en Cov_ZZ zijn dan de fouten.
+    De fouten kunnen bepaald worden door de vierkantswortels te nemen van  Cov_XX, Cov_YY en Cov_ZZ.
 
     Voor de correlaties worden de niet diagonaalelementen gebruikt. Aangezien de covariantiematrix symmetrisch is
     maat het niet uit of we bijvoorbeeld Cov_XY of Cov_YX gebruiken. Deze covariantie wordt dan gedeeld door de
-    vierkantswortel van het product van de fouten om de correlatie te bepalen.
-    vb: Corr_XY = Cov_XY / sqrt(Cov_XX * Cov_YY)
+    vierkantswortel van het product van de varianties om de correlatie te bepalen.
+    vb: Corr_XY = Cov_XY / np.sqrt(Cov_XX * Cov_YY)
 
     :param matrices: De 504 x 3 x 3 array die werd berekend in de matrix_vermenigvuldiging functie
     :param systematische_fout: Of de covariantiematrix van de sferische coordinaten die gebruikt werd al dan niet een
@@ -308,17 +306,22 @@ def plot_cov(matrices, systematische_fout: bool):
     cov_per_coordinaat = np.transpose(matrices, (1, 2, 0))
 
     # haal de 1 x 504 arrays uit de array om te gebruiken bij het plotten
-    fout_x = cov_per_coordinaat[0][0]
-    fout_y = cov_per_coordinaat[1][1]
-    fout_z = cov_per_coordinaat[2][2]
+    var_x = cov_per_coordinaat[0][0]
+    var_y = cov_per_coordinaat[1][1]
+    var_z = cov_per_coordinaat[2][2]
     cov_xy = cov_per_coordinaat[0][1]
     cov_yz = cov_per_coordinaat[1][2]
     cov_zx = cov_per_coordinaat[2][0]
 
+    # bereken de fouten
+    fout_x = np.sqrt(var_x)
+    fout_y = np.sqrt(var_y)
+    fout_z = np.sqrt(var_z)
+
     # bereken de correlaties
-    corr_xy = cov_xy / np.sqrt(fout_x * fout_y)
-    corr_yz = cov_yz / np.sqrt(fout_y * fout_z)
-    corr_zx = cov_zx / np.sqrt(fout_z * fout_x)
+    corr_xy = cov_xy / np.sqrt(var_x * var_y)
+    corr_yz = cov_yz / np.sqrt(var_y * var_z)
+    corr_zx = cov_zx / np.sqrt(var_z * var_x)
 
     # de waarden voor de sferische coordinaten
     r = data[0]
