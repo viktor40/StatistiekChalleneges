@@ -6,7 +6,6 @@ Opdracht 1
 Groep 4: Viktor Van Nieuwenhuize
          Aiko Decaluwe
          Fien Dewit
-         Isabelle Vanderhaeghen
 
 Indeling .py bestand:
     1. imports
@@ -170,6 +169,10 @@ def plot_coord_2d(x, y, assen: str, color: str):
     plt.scatter(x, y, marker='.', color=color)
     plt.xlabel('{}-waarden'.format(assen[0])), plt.ylabel('{}-waarden'.format(assen[1]))
     plt.title('De spreiding van de {} en {} waarden.'.format(assen[0], assen[1]))
+    if assen == 'xy':
+        plt.xlim(-2, 2), plt.ylim(-2, 2)
+    else:
+        plt.xlim(-4, 4), plt.ylim(-4, 4)
     plt.savefig('plots/deel1/{}_spreiding.pdf'.format(assen))
     plt.clf()
 
@@ -211,6 +214,7 @@ def coordinaattransformatie():
     ax.scatter(punten_cartesisch[0], punten_cartesisch[1], punten_cartesisch[2], depthshade=True, marker='x')
     ax.set_xlabel('X-waarden'), ax.set_ylabel('Y-waarden'), ax.set_zlabel('Z-waarden')
     ax.set_title('De spreiding van de cartesische coordinaten.')
+    ax.set_xlim(-4, 4), ax.set_ylim(-4, 4), ax.set_zlim(-4, 4)
     plt.savefig('plots/deel1/xyz_spreiding.pdf')
     plt.clf()
 
