@@ -240,7 +240,7 @@ def plot_fouten(x_waarde, y_waardes, systematische_fout: bool, spherische_coord:
     plt.scatter(x_waarde, y_waardes[1], marker='.', color='tab:green', label='y')
     plt.scatter(x_waarde, y_waardes[2], marker='.', color='darkorange', label='z')
     plt.xlabel('{} coördinaten'.format(spherische_coord)), plt.ylabel('x, y en z coördinaten')
-    plt.title('De fouten van de x, y en z coordinaten in functie van {}{}.'.format(spherische_coord, ' met systematische fout' if systematische_fout else ''))
+    plt.title('De fouten van de x, y en z coordinaten in functie van {}{}.'.format(spherische_coord, '\nmet systematische fout' if systematische_fout else '\nzonder systematische fout'))
     plt.legend(loc='upper right')
     plt.savefig('plots/{}/fout_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
                                                   spherische_coord), bbox_inches="tight")
@@ -265,7 +265,7 @@ def plot_correlaties(x_waarde, y_waardes, systematische_fout: bool, spherische_c
     plt.xlabel('{} coördinaten'.format(spherische_coord))
     plt.ylabel('de correlaties tussen xy, yz en zx'.format(spherische_coord))
     plt.title('De correlaties in functie van {}{}.'.format(spherische_coord,
-                                                           '\nmet systematische fout' if systematische_fout else ''))
+                                                           '\nmet systematische fout' if systematische_fout else '\nzonder systematische fout'))
     plt.legend(loc='upper right')
     plt.savefig('plots/{}/correlaties_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
                                                          spherische_coord), bbox_inches="tight")
