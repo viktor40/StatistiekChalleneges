@@ -323,9 +323,9 @@ def plot_cov(matrices, systematische_fout: bool):
     fout_z = np.sqrt(var_z)
 
     # bereken de correlaties
-    corr_xy = cov_xy / np.sqrt(var_x * var_y)
-    corr_yz = cov_yz / np.sqrt(var_y * var_z)
-    corr_zx = cov_zx / np.sqrt(var_z * var_x)
+    corr_xy = cov_xy / (fout_x * fout_y)
+    corr_yz = cov_yz / (fout_y * fout_z)
+    corr_zx = cov_zx / (fout_z * fout_x)
 
     # de waarden voor de sferische coordinaten
     r = data[0]
