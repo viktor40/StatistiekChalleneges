@@ -45,8 +45,13 @@ CR_S = np.array([[SIGMA_R ** 2, 0, 0],
 punten_sferisch = np.loadtxt('./punten_sferisch.dat')
 data = np.transpose(punten_sferisch)
 
+# de waarden voor de sferische coordinaten
+r = data[0]
+theta = data[1]
+phi = data[2]
 
-def sferisch_to_cartesisch(r, theta, phi):
+
+def sferisch_to_cartesisch():
     """
     De coordinaattransformatie van sferische naar cartesische coordinaten wordt in deze functie geïmplementeerd.
 
@@ -62,7 +67,7 @@ def sferisch_to_cartesisch(r, theta, phi):
     return np.array([x, y, z])
 
 
-def afgeleide_r(theta, phi):
+def afgeleide_r():
     """
     x, y en z afleiden naar r.
     :param theta: een 504 x 1 array met hierin alle waarden voor theta
@@ -76,7 +81,7 @@ def afgeleide_r(theta, phi):
     return np.array([dx_dr, dy_dr, dz_dr])
 
 
-def afgeleide_theta(r, theta, phi):
+def afgeleide_theta():
     """
     x, y en z afleiden naar theta.
     :param r: een 504 x 1 array met hierin alle waarden voor r
@@ -91,7 +96,7 @@ def afgeleide_theta(r, theta, phi):
     return np.array([dx_dt, dy_dt, dz_dt])
 
 
-def afgeleide_phi(r, theta, phi):
+def afgeleide_phi():
     """
     x, y en z afleiden naar phi.
     :param r: een 504 x 1 array met hierin alle waarden voor r
@@ -131,15 +136,10 @@ def matrix_vermenigvuldiging(systematische_fout: bool):
            spherische coordinaten berekend.
     """
 
-    # de sferische coordinaten als 1 x 504 array
-    r = data[0]
-    theta = data[1]
-    phi = data[2]
-
     # stel de matrix op om te gebruiken in de matrixvermenigvuldiging
-    A = np.array(([afgeleide_r(theta, phi),
-                   afgeleide_theta(r, theta, phi),
-                   afgeleide_phi(r, theta, phi)]))
+    A = np.array(([afgeleide_r(),
+                   afgeleide_theta(),
+                   afgeleide_phi()]))
 
     # pas de einsum toe om de uiteindelijke covariantiematrices te verkrijgen als 508 x 3 x 3 array.
     if not systematische_fout:
@@ -191,7 +191,7 @@ def coordinaattransformatie():
     """
 
     # Histogrammen van X, Y en Z
-    punten_cartesisch = sferisch_to_cartesisch(data[0], data[1], data[2])
+    punten_cartesisch = sferisch_to_cartesisch()
     plt.hist(punten_cartesisch[0], bins=30, density=True, alpha=0.25, color='green', histtype='bar')
     plt.hist(punten_cartesisch[0], bins=30, density=True, alpha=1, color='green', histtype='step')
     plt.hist(punten_cartesisch[1], bins=30, density=True, alpha=0.25, color='red', histtype='bar')
@@ -326,11 +326,6 @@ def plot_cov(matrices, systematische_fout: bool):
     corr_xy = cov_xy / (fout_x * fout_y)
     corr_yz = cov_yz / (fout_y * fout_z)
     corr_zx = cov_zx / (fout_z * fout_x)
-
-    # de waarden voor de sferische coordinaten
-    r = data[0]
-    theta = data[1]
-    phi = data[2]
 
     # plots van de fouten in functie van de spherische coordinaten
     plot_fouten(r, (fout_x, fout_y, fout_z), systematische_fout, 'r')
