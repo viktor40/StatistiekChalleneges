@@ -51,14 +51,34 @@ theta = data[1]
 phi = data[2]
 
 
+def main():
+    """
+    Main functie om het script uit te voeren
+    """
+
+    # voor de coordinaattransformatie uit (Puntje 2.1)
+    coordinaattransformatie()
+
+    # bereken de covariantiematrices (Puntje 2.2 en 2.3)
+    matrix_vermenigvuldiging(systematische_fout=False)
+
+    # plot de covariantiematrices (Puntje 3)
+    inputfile = open("covariantiematrix_geen_correlaties", 'rb')
+    cov_matrices = pickle.load(inputfile)
+    inputfile.close()
+    plot_cov(cov_matrices, systematische_fout=False)
+
+    # plot de covariantiematrices met systematische fout (Puntje 4)
+    matrix_vermenigvuldiging(systematische_fout=True)
+    inputfile = open("covariantiematrix_systematische_fout", 'rb')
+    cov_matrices = pickle.load(inputfile)
+    inputfile.close()
+    plot_cov(cov_matrices, systematische_fout=True)
+
+
 def sferisch_to_cartesisch():
     """
     De coordinaattransformatie van sferische naar cartesische coordinaten wordt in deze functie geïmplementeerd.
-
-    :param r: een 504 x 1 array met hierin alle waarden voor r
-    :param theta: een 504 x 1 array met hierin alle waarden voor theta
-    :param phi: een 504 x 1 array met hierin alle waarden voor phi
-    :return: een 504 x 3 array. Elke 1 x 3 matrix bevat x, y en z, m.a.w 1 cartesische coordinaat.
     """
 
     x = r * np.sin(theta) * np.cos(phi)
@@ -70,9 +90,6 @@ def sferisch_to_cartesisch():
 def afgeleide_r():
     """
     x, y en z afleiden naar r.
-    :param theta: een 504 x 1 array met hierin alle waarden voor theta
-    :param phi: een 504 x 1 array met hierin alle waarden voor phi
-    :return: een 504 x 3 array. Elke 1 x 3 matrix bevat de afgeleide van x, y en z naar r voor een coordinaat.
     """
 
     dx_dr = np.sin(theta) * np.cos(phi)
@@ -84,10 +101,6 @@ def afgeleide_r():
 def afgeleide_theta():
     """
     x, y en z afleiden naar theta.
-    :param r: een 504 x 1 array met hierin alle waarden voor r
-    :param theta: een 504 x 1 array met hierin alle waarden voor theta
-    :param phi: een 504 x 1 array met hierin alle waarden voor phi
-    :return: een 504 x 3 array. Elke 1 x 3 matrix bevat de afgeleide van x, y en z naar theta voor een coordinaat.
     """
 
     dx_dt = r * np.cos(theta) * np.cos(phi)
@@ -99,10 +112,6 @@ def afgeleide_theta():
 def afgeleide_phi():
     """
     x, y en z afleiden naar phi.
-    :param r: een 504 x 1 array met hierin alle waarden voor r
-    :param theta: een 504 x 1 array met hierin alle waarden voor theta
-    :param phi: een 504 x 1 array met hierin alle waarden voor phi
-    :return: een 504 x 3 array. Elke 1 x 3 matrix bevat de afgeleide van x, y en z naar phi voor een coordinaat.
     """
 
     dx_dp = - r * np.sin(theta) * np.sin(phi)
@@ -338,24 +347,5 @@ def plot_cov(matrices, systematische_fout: bool):
     plot_correlaties(phi, (corr_xy, corr_yz, corr_zx), systematische_fout, 'phi')
 
 
-# voor de coordinaattransformatie uit (Puntje 2.1)
-coordinaattransformatie()
-
-
-# bereken de covariantiematrices (Puntje 2.2 en 2.3)
-matrix_vermenigvuldiging(systematische_fout=False)
-
-
-# plot de covariantiematrices (Puntje 3)
-inputfile = open("covariantiematrix_geen_correlaties", 'rb')
-cov_matrices = pickle.load(inputfile)
-inputfile.close()
-plot_cov(cov_matrices, systematische_fout=False)
-
-
-# plot de covariantiematrices met systematische fout (Puntje 4)
-matrix_vermenigvuldiging(systematische_fout=True)
-inputfile = open("covariantiematrix_systematische_fout", 'rb')
-cov_matrices = pickle.load(inputfile)
-inputfile.close()
-plot_cov(cov_matrices, systematische_fout=True)
+if __name__ == "__main__":
+    main()
