@@ -9,10 +9,12 @@ Groep 4: Viktor Van Nieuwenhuize
 
 Indeling .py bestand:
     1. imports
-    2. constanten
-    3. functies voor berekeningen
-    4. functies voor plotten
-    5. Uitvoeren van juiste functies per deelopdracht
+    2. Constanten
+    3. Config
+    4. main()
+    5. functies voor berekeningen
+    6. functies voor plotten
+    7. run main()
 
 Indien een parameter van een functie geen np.array([]) is, wordt deze meestal gebruikt om aan te duiden voor wat de
 functie wordt gebruikt. Voor duidelijkheid weren in dat geval type hints gebruikt bij de parameters.
@@ -25,7 +27,7 @@ import matplotlib.patches as mpatches
 import pickle
 
 
-# ---- Constanten ----
+"""----- Constanten -----"""
 # de fouten op r, theta en sigma
 SIGMA_R, SIGMA_THETA, SIGMA_PHI = 0.001, 0.003, 0.005
 
@@ -51,29 +53,52 @@ theta = data[1]
 phi = data[2]
 
 
+"""----- Config -----"""
+# Hier kunnen de variabelen op False worden gezet om zo delen van de code niet te runnen in main()
+
+# Bereken en plot de coordinaattransformatie wel of niet
+COORDINAAT_TRANSFORMATIE = False
+
+# bereken en of plot de covariantiematrix zonder systematische fout.
+# Eens deze covariantiematrix berekend is kan BEREKEN_COV_ZONDER_SYSTEMATICHE_FOUT op False worden gezet. We pickelen
+# deze matrix namelijk zodat hij niet opnieuw moet worden berekend. Idem voor de berekening met systematische fout.
+BEREKEN_COV_ZONDER_SYSTEMATICHE_FOUT = False
+PLOT_COV_ZONDER_SYSTEMATICHE_FOUT = False
+
+BEREKEN_COV_MET_SYSTEMATICHE_FOUT = False
+PLOT_COV_MET_SYSTEMATICHE_FOUT = False
+
+
 def main():
     """
     Main functie om het script uit te voeren
     """
 
-    # voor de coordinaattransformatie uit (Puntje 2.1)
-    coordinaattransformatie()
+    if COORDINAAT_TRANSFORMATIE:
+        # voor de coordinaattransformatie uit (Puntje 2.1)
+        coordinaattransformatie()
 
-    # bereken de covariantiematrices (Puntje 2.2 en 2.3)
-    matrix_vermenigvuldiging(systematische_fout=False)
+    if BEREKEN_COV_ZONDER_SYSTEMATICHE_FOUT:
+        # bereken de covariantiematrices (Puntje 2.2 en 2.3)
+        matrix_vermenigvuldiging(systematische_fout=False)
 
-    # plot de covariantiematrices (Puntje 3)
-    inputfile = open("covariantiematrix_geen_correlaties", 'rb')
-    cov_matrices = pickle.load(inputfile)
-    inputfile.close()
-    plot_cov(cov_matrices, systematische_fout=False)
+    if PLOT_COV_ZONDER_SYSTEMATICHE_FOUT:
+        # plot de covariantiematrices (Puntje 3)
+        inputfile = open("covariantiematrix_geen_correlaties", 'rb')
+        cov_matrices = pickle.load(inputfile)
+        inputfile.close()
+        plot_cov(cov_matrices, systematische_fout=False)
 
-    # plot de covariantiematrices met systematische fout (Puntje 4)
-    matrix_vermenigvuldiging(systematische_fout=True)
-    inputfile = open("covariantiematrix_systematische_fout", 'rb')
-    cov_matrices = pickle.load(inputfile)
-    inputfile.close()
-    plot_cov(cov_matrices, systematische_fout=True)
+    if BEREKEN_COV_MET_SYSTEMATICHE_FOUT:
+        # plot de covariantiematrices met systematische fout (Puntje 4)
+        matrix_vermenigvuldiging(systematische_fout=True)
+
+    if PLOT_COV_MET_SYSTEMATICHE_FOUT:
+        # plot de covariantiematrices met systematische fout (Puntje 4)
+        inputfile = open("covariantiematrix_systematische_fout", 'rb')
+        cov_matrices = pickle.load(inputfile)
+        inputfile.close()
+        plot_cov(cov_matrices, systematische_fout=True)
 
 
 def sferisch_to_cartesisch():
