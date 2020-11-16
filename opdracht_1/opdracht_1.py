@@ -57,16 +57,16 @@ phi = data[2]
 # Hier kunnen de variabelen op False worden gezet om zo delen van de code niet te runnen in main()
 
 # Bereken en plot de coordinaattransformatie wel of niet
-COORDINAAT_TRANSFORMATIE = False
+COORDINAAT_TRANSFORMATIE = True
 
 # bereken en of plot de covariantiematrix zonder systematische fout.
 # Eens deze covariantiematrix berekend is kan BEREKEN_COV_ZONDER_SYSTEMATICHE_FOUT op False worden gezet. We pickelen
 # deze matrix namelijk zodat hij niet opnieuw moet worden berekend. Idem voor de berekening met systematische fout.
-BEREKEN_COV_ZONDER_SYSTEMATICHE_FOUT = False
-PLOT_COV_ZONDER_SYSTEMATICHE_FOUT = False
+BEREKEN_COV_ZONDER_SYSTEMATICHE_FOUT = True
+PLOT_COV_ZONDER_SYSTEMATICHE_FOUT = True
 
-BEREKEN_COV_MET_SYSTEMATICHE_FOUT = False
-PLOT_COV_MET_SYSTEMATICHE_FOUT = False
+BEREKEN_COV_MET_SYSTEMATICHE_FOUT = True
+PLOT_COV_MET_SYSTEMATICHE_FOUT = True
 
 
 def main():
