@@ -84,7 +84,7 @@ def main():
 
     if PLOT_COV_ZONDER_SYSTEMATICHE_FOUT:
         # plot de covariantiematrices (Puntje 3)
-        inputfile = open("covariantiematrix_geen_correlaties", 'rb')
+        inputfile = open('covariantiematrix_geen_correlaties', 'rb')
         cov_matrices = pickle.load(inputfile)
         inputfile.close()
         plot_cov(cov_matrices, systematische_fout=False)
@@ -95,7 +95,7 @@ def main():
 
     if PLOT_COV_MET_SYSTEMATICHE_FOUT:
         # plot de covariantiematrices met systematische fout (Puntje 4)
-        inputfile = open("covariantiematrix_systematische_fout", 'rb')
+        inputfile = open('covariantiematrix_systematische_fout', 'rb')
         cov_matrices = pickle.load(inputfile)
         inputfile.close()
         plot_cov(cov_matrices, systematische_fout=True)
@@ -179,14 +179,14 @@ def matrix_vermenigvuldiging(systematische_fout: bool):
     if not systematische_fout:
         # Wanneer er geen systematische fout is gebruiken we CR.
         CX = np.einsum('kji, kl, lmi -> ijm', A, CR, A)
-        outfile = open("covariantiematrix_geen_correlaties", 'wb')
+        outfile = open('covariantiematrix_geen_correlaties', 'wb')
         pickle.dump(CX, outfile)
         outfile.close()
 
     else:
         # Wanneer er wel een systematische fout is gebruiken we CR_S
         CX = np.einsum('kji, kl, lmi -> ijm', A, CR_S, A)
-        outfile = open("covariantiematrix_systematische_fout", 'wb')
+        outfile = open('covariantiematrix_systematische_fout', 'wb')
         pickle.dump(CX, outfile)
         outfile.close()
 
@@ -306,7 +306,7 @@ def plot_correlaties(x_waarde, y_waardes, systematische_fout: bool, spherische_c
                                                            '\nmet systematische fout' if systematische_fout else '\nzonder systematische fout'))
     plt.legend(loc='upper right')
     plt.savefig('plots/{}/correlaties_ifv_{}.pdf'.format('met S fout' if systematische_fout else 'zonder S fout',
-                                                         spherische_coord), bbox_inches="tight")
+                                                         spherische_coord), bbox_inches='tight')
     plt.clf()
 
 
@@ -372,5 +372,5 @@ def plot_cov(matrices, systematische_fout: bool):
     plot_correlaties(phi, (corr_xy, corr_yz, corr_zx), systematische_fout, 'phi')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
