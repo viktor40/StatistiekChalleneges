@@ -59,7 +59,7 @@ def main():
             inputfile.close()
 
         if plotten:
-            plot(bootstrap_result)
+            plot(bootstrap_result, 'MM')
 
         if vergelijken:
             vergelijk('MM')
@@ -82,7 +82,7 @@ def main():
             inputfile.close()
 
         if plotten:
-            plot(bootstrap_result)
+            plot(bootstrap_result, 'MLLH')
 
         if vergelijken:
             vergelijk('MLH')
@@ -215,31 +215,35 @@ def repeat_bootstrap(func):
     return repeat_data
 
 
-def plot(data):
+def plot(data, methode):
     bias_k, bias_theta, var_k, var_theta, corr = data
 
+    f = plt.figure()
     x_values = np.array(range(N_START, N_MAX, STEPS))
     plt.scatter(x_values, bias_k, c='red', marker='.', label='theta')
     plt.scatter(x_values, bias_theta, c='blue', marker='.', label='theta')
     plt.xlabel('N iteraties'), plt.ylabel('Bias')
-    plt.title('Bias MM')
+    plt.title('Bias', methode, '')
     plt.legend()
     plt.show()
     plt.clf()
+    f.savefig("Bias_{}.pdf".format(methode), bbox_inches="tight")
 
     plt.scatter(x_values, var_k, c='red', marker='.', label='k')
     plt.scatter(x_values, var_theta, c='blue', marker='.', label='theta')
     plt.xlabel('N iteraties'), plt.ylabel('Variantie')
-    plt.title('Variantie MM')
+    plt.title('Variantie ', methode, '')
     plt.legend()
     plt.show()
     plt.clf()
+    f.savefig("Variantie_{}.pdf".format(methode), bbox_inches="tight")
 
     plt.scatter(x_values, corr, c='red', marker='.')
     plt.xlabel('N iteraties'), plt.ylabel('Correlatiecoëfficiënt')
-    plt.title('Correlatiecoëfficiënt MM')
+    plt.title('Correlatiecoëfficiënt ', methode, '')
     plt.show()
     plt.clf()
+    f.savefig("Correlatie_{}.pdf".format(methode), bbox_inches="tight")
 
 
 def vergelijk(schattingsmethods):
