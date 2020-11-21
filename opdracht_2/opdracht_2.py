@@ -71,7 +71,7 @@ def main():
             vergelijk('MM')
 
     # divider
-    if likelihood and momenten and vergelijken:
+    if likelihood and momenten:
         print('-' * 110)
 
     # Maximum Likelihood Methode
@@ -264,7 +264,7 @@ def bias(k_bootstrap, theta_bootstrap, echte_k, echte_theta):
 def bootstrap_iterator():
     """
     Een iterator voor tijdens het bootstrappen te gebruiken. Deze iterator zal ervoor zorgen dat N_MAX altijd de laatste
-    N is en niet wordt weggelaten, wat normaal zou gebeuren wanneer je met steps werkt in range()
+    N is en niet wordt weggelaten, wat kan gebeuren wanneer je met steps werkt in range()
     """
     for N in range(N_START, N_MAX, STEPS):
         yield N
