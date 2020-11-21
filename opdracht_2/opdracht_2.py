@@ -71,7 +71,7 @@ def main():
 
     # divider
     if likelihood and momenten and vergelijken:
-        print('-' * 100)
+        print('-' * 110)
 
     # Maximum Likelihood Methode
     if likelihood:
@@ -115,6 +115,20 @@ def pick_random_samples(N):
     :param N: Het aantal samples dat we willen trekken uit de dataset
     """
     return np.random.choice(samples, size=N)
+
+
+def schatters_MM(data):
+    """
+    Deze functie berekent de schatters voor de methode van de momenten
+    :param data: de dataset waaruit k en theta wordt berekend
+    :return: De schatters k en theta
+    """
+    gem_x = np.average(data)
+    gem_x2 = np.average(data**2)
+
+    k = gem_x**2 / (gem_x2 - gem_x ** 2)
+    theta = (gem_x2 - gem_x ** 2) / gem_x
+    return k, theta
 
 
 def schatters_MLLH(data):
@@ -228,20 +242,6 @@ def covariantie_MLLH():
     cov_k_theta = cov[0][1]
     cor_k_theta = cov_k_theta / np.sqrt(var_k * var_theta)
     return var_k, var_theta, cor_k_theta
-
-
-def schatters_MM(data):
-    """
-    Deze functie berekent de schatters voor de methode van de momenten
-    :param data: de dataset waaruit k en theta wordt berekend
-    :return: De schatters k en theta
-    """
-    gem_x = np.average(data)
-    gem_x2 = np.average(data**2)
-
-    k = gem_x**2 / (gem_x2 - gem_x ** 2)
-    theta = (gem_x2 - gem_x ** 2) / gem_x
-    return k, theta
 
 
 def bias(k_bootstrap, theta_bootstrap, echte_k, echte_theta):
@@ -361,9 +361,14 @@ def vergelijk(schattingsmethods):
     # de geschatte varianties
     var_k_schatters, var_theta_schatters, corr_schatters = variantie()
 
-    print('Variantie k      -  bootstrap: {}            schatting: {}'.format(var_k_bootstrap, var_k_schatters))
-    print('Variantie theta  -  bootstrap: {}            schatting: {}'.format(var_theta_bootstrap, var_theta_schatters))
-    print('correlatie       -  bootstrap: {}            schatting: {}'.format(corr_bootstrap, corr_schatters))
+    # berekenen van de witruimte tussen bootstrap en schatting voor het printen
+    space_var_k = (35 - len(str(var_k_bootstrap))) * ' '
+    space_var_theta = (35 - len(str(var_theta_bootstrap))) * ' '
+    space_corr = (35 - len(str(corr_bootstrap))) * ' '
+
+    print('Variantie k      ---  bootstrap: {}{}schatting: {}'.format(var_k_bootstrap, space_var_k, var_k_schatters))
+    print('Variantie theta  ---  bootstrap: {}{}schatting: {}'.format(var_theta_bootstrap, space_var_theta, var_theta_schatters))
+    print('correlatie       ---  bootstrap: {}{}schatting: {}'.format(corr_bootstrap, space_corr, corr_schatters))
 
 
 if __name__ == '__main__':
