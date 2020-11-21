@@ -8,12 +8,14 @@ Groep 4: Viktor Van Nieuwenhuize
          Fien Dewit
 
 Indeling .py bestand:
-    1. main function
-    2. bepalen van de schatters
-    3. bepalen van de covariantiematrix van de schattingsmethode
-    4. bootstrappen
-    5. vergelijken van de geschatte waarden t.o.v. de gebootstrapte waarden
-    6. run het script
+    1. constanten
+    2. config
+    3. main function
+    4. bepalen van de schatters
+    5. bepalen van de covariantiematrix van de schattingsmethode
+    6. bootstrappen
+    7. vergelijken van de geschatte waarden t.o.v. de gebootstrapte waarden
+    8. run het script
 """
 
 import numpy as np
@@ -56,7 +58,6 @@ def main():
             outfile = open('bootstrap_MM', 'wb')
             pickle.dump(bootstrap_result, outfile)
             outfile.close()
-
         else:
             inputfile = open('bootstrap_MM', 'rb')
             bootstrap_result = pickle.load(inputfile)
@@ -79,7 +80,6 @@ def main():
             outfile = open('bootstrap_MLLH', 'wb')
             pickle.dump(bootstrap_result, outfile)
             outfile.close()
-
         else:
             inputfile = open('bootstrap_MLLH', 'rb')
             bootstrap_result = pickle.load(inputfile)
@@ -170,9 +170,9 @@ def afgeleides_MM_schatters(gem_x, gem_x2):
     :param gem_x: Het gemiddelde van alle x-waarden
     :param gem_x2: Het gemiddelde van de kwadraten van de x-waarden
     """
-    dk_dx = (2 * gem_x * gem_x2) / (gem_x2 - gem_x ** 2)
-    dk_dx2 = - gem_x2 ** 2 / (gem_x2 - gem_x ** 2) ** 2
-    dt_dx = - (gem_x2 + gem_x ** 2) / gem_x ** 1
+    dk_dx = (2 * gem_x * gem_x2) / ((gem_x2 - gem_x ** 2) ** 2)
+    dk_dx2 = - gem_x ** 2 / ((gem_x2 - gem_x ** 2) ** 2)
+    dt_dx = - (gem_x2 + gem_x ** 2) / gem_x ** 2
     dt_dx2 = 1 / gem_x
     return dk_dx, dk_dx2, dt_dx, dt_dx2
 
@@ -186,14 +186,14 @@ def covariantie_MM():
     N = len(samples)
 
     gem_x = np.average(xi)
-    gem_x2 = np.average(samples)
+    gem_x2 = np.average(xi_2)
 
     dk_dx, dk_dx2, dt_dx, dt_dx2 = afgeleides_MM_schatters(gem_x, gem_x2)
     cov_x_x, cov_x_x2, cov_x2_x2 = covariantie_momenten_MM(xi, xi_2, gem_x, gem_x2, N)
 
-    var_k = dk_dx ** 2 * cov_x_x + dk_dx2 ** 2 + cov_x2_x2 + 2 * dk_dx * dk_dx2 * cov_x_x2
-    var_theta = dt_dx ** 2 * cov_x_x + dt_dx2 ** 2 + cov_x2_x2 + 2 * dt_dx * dt_dx2 * cov_x_x2
-    cov_k_theta = dk_dx * dt_dx * cov_x_x + dk_dx2 * dt_dx2 * cov_x2_x2 + (dk_dx * dt_dx2 + dt_dx * dt_dx2) * cov_x_x2
+    var_k = (dk_dx ** 2)*cov_x_x + (dk_dx2 ** 2)*cov_x2_x2 + (2 * dk_dx * dk_dx2)*cov_x_x2
+    var_theta = (dt_dx ** 2)*cov_x_x + (dt_dx2 ** 2)*cov_x2_x2 + (2 * dt_dx * dt_dx2)*cov_x_x2
+    cov_k_theta = (dk_dx * dt_dx)*cov_x_x + (dk_dx2 * dt_dx2)*cov_x2_x2 + (dk_dx * dt_dx2 + dk_dx2 * dt_dx) * cov_x_x2
     cor_k_theta = cov_k_theta / np.sqrt(var_k * var_theta)
 
     return var_k, var_theta, cor_k_theta
