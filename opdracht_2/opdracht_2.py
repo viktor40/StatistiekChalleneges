@@ -34,7 +34,7 @@ likelihood = True
 
 bootstrappen = False
 plotten = False
-vergelijken = False
+vergelijken = True
 
 
 def main():
@@ -218,32 +218,32 @@ def repeat_bootstrap(func):
 def plot(data, methode):
     bias_k, bias_theta, var_k, var_theta, corr = data
 
-    f = plt.figure()
     x_values = np.array(range(N_START, N_MAX, STEPS))
-    plt.scatter(x_values, bias_k, c='red', marker='.', label='theta')
+
+    # Bias plotten
+    plt.scatter(x_values, bias_k, c='red', marker='.', label='k')
     plt.scatter(x_values, bias_theta, c='blue', marker='.', label='theta')
     plt.xlabel('N iteraties'), plt.ylabel('Bias')
-    plt.title('Bias', methode, '')
-    plt.legend()
-    plt.show()
+    plt.title('Bias' + methode)
+    plt.legend(loc='upper right')
+    plt.savefig("plots/Bias_{}.pdf".format(methode), bbox_inches="tight")
     plt.clf()
-    f.savefig("Bias_{}.pdf".format(methode), bbox_inches="tight")
 
+    # Variantie plotten
     plt.scatter(x_values, var_k, c='red', marker='.', label='k')
     plt.scatter(x_values, var_theta, c='blue', marker='.', label='theta')
     plt.xlabel('N iteraties'), plt.ylabel('Variantie')
-    plt.title('Variantie ', methode, '')
-    plt.legend()
-    plt.show()
+    plt.title('Variantie ' + methode)
+    plt.legend(loc='upper right')
+    plt.savefig("plots/Variantie_{}.pdf".format(methode), bbox_inches="tight")
     plt.clf()
-    f.savefig("Variantie_{}.pdf".format(methode), bbox_inches="tight")
 
+    # Covariantie plotten
     plt.scatter(x_values, corr, c='red', marker='.')
     plt.xlabel('N iteraties'), plt.ylabel('Correlatiecoëfficiënt')
-    plt.title('Correlatiecoëfficiënt ', methode, '')
-    plt.show()
+    plt.title('Correlatiecoëfficiënt ' + methode)
+    plt.savefig("plots/Correlatie_{}.pdf".format(methode), bbox_inches="tight")
     plt.clf()
-    f.savefig("Correlatie_{}.pdf".format(methode), bbox_inches="tight")
 
 
 def vergelijk(schattingsmethods):
