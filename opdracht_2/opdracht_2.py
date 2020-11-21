@@ -38,9 +38,9 @@ STEPS = 500
 momenten = True
 likelihood = True
 
-bootstrappen = False
+bootstrappen = True
 plotten = False
-vergelijken = True
+vergelijken = False
 
 
 def main():
@@ -261,6 +261,18 @@ def bias(k_bootstrap, theta_bootstrap, echte_k, echte_theta):
     return bias_k, bias_theta
 
 
+def bootstrap_iterator():
+    """
+    Een iterator voor tijdens het bootstrappen te gebruiken. Deze iterator zal ervoor zorgen dat N_MAX altijd de laatste
+    N is en niet wordt weggelaten, wat normaal zou gebeuren wanneer je met steps werkt in range()
+    """
+    for N in range(N_START, N_MAX, STEPS):
+        yield N
+
+    if N < N_MAX:
+        yield N_MAX
+
+
 def bootstrap(N, func, echte_k, echte_theta):
     """
     Deze functie past het bootstrappen toe. k en theta worden M keer berekend en er worden N waarden getrokken
@@ -290,7 +302,7 @@ def repeat_bootstrap(func):
     :return: een array met lijsten voor de biassen, varianties en correlaties van k en theta.
     """
     echte_k, echte_theta = func(samples)
-    repeat_data = np.array([bootstrap(N, func, echte_k, echte_theta) for N in range(N_START, N_MAX, STEPS)]).T
+    repeat_data = np.array([bootstrap(N, func, echte_k, echte_theta) for N in bootstrap_iterator()]).T
     return repeat_data
 
 
@@ -304,7 +316,7 @@ def plot(data, methode):
     """
     bias_k, bias_theta, var_k, var_theta, corr = data
 
-    x_values = np.array(range(N_START, N_MAX, STEPS))
+    x_values = np.array([i for i in bootstrap_iterator()])
 
     # Bias plotten
     plt.scatter(x_values, bias_k, c='red', marker='.', label='k')
