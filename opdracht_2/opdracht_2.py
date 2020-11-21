@@ -53,6 +53,7 @@ def main():
 
     # Methode van de Momenten
     if momenten:
+        print('Methode van de Momenten (MM):')
         if bootstrappen:
             bootstrap_result = repeat_bootstrap(schatters_MM)
             outfile = open('bootstrap_MM', 'wb')
@@ -75,6 +76,7 @@ def main():
 
     # Maximum Likelihood Methode
     if likelihood:
+        print('Maximum Log Likelihood Methode (MLLH):')
         if bootstrappen:
             bootstrap_result = repeat_bootstrap(schatters_MLLH)
             outfile = open('bootstrap_MLLH', 'wb')
