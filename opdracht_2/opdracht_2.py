@@ -28,10 +28,9 @@ import pickle
 
 """----- Constanten -----"""
 samples = np.loadtxt('./gamma_samples.dat')
-M = 100
+M = 1000
 N_START = 100
 N_MAX = 100000
-STEPS = 500
 
 
 """----- Config -----"""
@@ -39,8 +38,8 @@ momenten = True
 likelihood = True
 
 bootstrappen = True
-plotten = False
-vergelijken = False
+plotten = True
+vergelijken = True
 
 
 def main():
@@ -50,22 +49,14 @@ def main():
     Verder kan men in config kiezen om niet te plotten of de gebootstrapte varianties niet te vergelijken met de
     geschatte varianties.
     """
-
     # Methode van de Momenten
     if momenten:
         print('Methode van de Momenten (MM):')
         if bootstrappen:
-            bootstrap_result = repeat_bootstrap(schatters_MM)
+            bootstrap_result_MM = repeat_bootstrap(schatters_MM)
             outfile = open('bootstrap_MM', 'wb')
-            pickle.dump(bootstrap_result, outfile)
+            pickle.dump(bootstrap_result_MM, outfile)
             outfile.close()
-        else:
-            inputfile = open('bootstrap_MM', 'rb')
-            bootstrap_result = pickle.load(inputfile)
-            inputfile.close()
-
-        if plotten:
-            plot(bootstrap_result, 'MM')
 
         if vergelijken:
             vergelijk('MM')
@@ -78,20 +69,26 @@ def main():
     if likelihood:
         print('Maximum Log Likelihood Methode (MLLH):')
         if bootstrappen:
-            bootstrap_result = repeat_bootstrap(schatters_MLLH)
+            bootstrap_result_MLLH = repeat_bootstrap(schatters_MLLH)
             outfile = open('bootstrap_MLLH', 'wb')
-            pickle.dump(bootstrap_result, outfile)
+            pickle.dump(bootstrap_result_MLLH, outfile)
             outfile.close()
-        else:
-            inputfile = open('bootstrap_MLLH', 'rb')
-            bootstrap_result = pickle.load(inputfile)
-            inputfile.close()
-
-        if plotten:
-            plot(bootstrap_result, 'MLLH')
 
         if vergelijken:
             vergelijk('MLLH')
+
+    # Plotten van de data
+    if plotten and momenten and likelihood:
+        inputfile = open('bootstrap_MM', 'rb')
+        bootstrap_result_MM = pickle.load(inputfile)
+        inputfile.close()
+
+        inputfile = open('bootstrap_MLLH', 'rb')
+        bootstrap_result_MLLH = pickle.load(inputfile)
+        inputfile.close()
+
+        plot(bootstrap_result_MM, bootstrap_result_MLLH)
+
 
 
 def timer(func):
@@ -101,7 +98,6 @@ def timer(func):
 
     :param func: De functie waarvan we de performantie willen testen.
     """
-
     def wrapper(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
@@ -211,7 +207,6 @@ def covariantie_MM():
     var_theta = (dt_dx ** 2)*cov_x_x + (dt_dx2 ** 2)*cov_x2_x2 + (2 * dt_dx * dt_dx2)*cov_x_x2
     cov_k_theta = (dk_dx * dt_dx)*cov_x_x + (dk_dx2 * dt_dx2)*cov_x2_x2 + (dk_dx * dt_dx2 + dk_dx2 * dt_dx) * cov_x_x2
     cor_k_theta = cov_k_theta / np.sqrt(var_k * var_theta)
-
     return var_k, var_theta, cor_k_theta
 
 
@@ -222,13 +217,12 @@ def covariantie_MLLH():
     Hierna wordt deze matrix geïnverteerd waarna we de variantie van de schatters uit deze matrix kunnen halen.
     :return: de variantie van k en theta alsook de covariantie tussen de 2
     """
-
     k, theta = schatters_MLLH(samples)
     N = len(samples)
 
     # de elementen van V^-1
     C_11 = N * polygamma(1, k)
-    C_12 = N / k
+    C_12 = N / theta
     C_22 = N * (k / theta ** 2)
 
     # inverse covariantiematrix
@@ -261,16 +255,25 @@ def bias(k_bootstrap, theta_bootstrap, echte_k, echte_theta):
     return bias_k, bias_theta
 
 
-def bootstrap_iterator():
+def bootstrap_generator():
     """
-    Een iterator voor tijdens het bootstrappen te gebruiken. Deze iterator zal ervoor zorgen dat N_MAX altijd de laatste
-    N is en niet wordt weggelaten, wat kan gebeuren wanneer je met steps werkt in range()
+    Een generator voor tijdens het bootstrappen te gebruiken. Deze iterator zal er voor zorgen dat de niet in elk
+    interval gelijk zijn.
+    Tussen 100 en 1000 gebruiken we stappen van 100. Tussen 1500 en 10000 worden er stappen van 250 gebruikt etc.
     """
-    for N in range(N_START, N_MAX, STEPS):
+    for N in range(N_START, 1000, 100):
         yield N
 
-    if N < N_MAX:
-        yield N_MAX
+    for N in range(1000, 10000, 250):
+        yield N
+
+    for N in range(10000, 50000, 500):
+        yield N
+
+    for N in range(50000, N_MAX, 1000):
+        yield N
+
+    yield N_MAX
 
 
 def bootstrap(N, func, echte_k, echte_theta):
@@ -302,45 +305,66 @@ def repeat_bootstrap(func):
     :return: een array met lijsten voor de biassen, varianties en correlaties van k en theta.
     """
     echte_k, echte_theta = func(samples)
-    repeat_data = np.array([bootstrap(N, func, echte_k, echte_theta) for N in bootstrap_iterator()]).T
+    repeat_data = np.array([bootstrap(N, func, echte_k, echte_theta) for N in bootstrap_generator()]).T
     return repeat_data
 
 
-def plot(data, methode):
+def plot(bootstrap_result_MM, bootstrap_result_MLLH):
     """
-    Deze functie plot de bias van k en theta, de variantie van k en theta en de correlatie tussen de 2.
-
-    :param data: De waarden om te plotten. Data bevat lijsten voor de biassen, de varianties en de correlaties.
-    :param methode: De methode die gebruikt werd om de data te berekenen. Dit wordt gebruikt voor titels en het opslaan
-                    van de plots.
+    In deze functie wordt het plotten uitgevoerd. De bias en variantie van k en theta en de covariantie tussen
+    k en theta worden geplot. Telkens worden de curves voor de 2 methodes samen gezet.
+    :param bootstrap_result_MM: De data verkregen na het bootstrappen voor de methode van de momenten
+    :param bootstrap_result_MLLH: De data verkregen na het bootstrappen voor de maximum log likelihood methode
+    :return:
     """
-    bias_k, bias_theta, var_k, var_theta, corr = data
+    bias_k_MM, bias_theta_MM, var_k_MM, var_theta_MM, corr_MM = bootstrap_result_MM
+    bias_k_MLLH, bias_theta_MLLH, var_k_MLLH, var_theta_MLLH, corr_MLLH = bootstrap_result_MLLH
 
-    x_values = np.array([i for i in bootstrap_iterator()])
+    x_values = np.array([i for i in bootstrap_generator()])
 
-    # Bias plotten
-    plt.scatter(x_values, bias_k, c='red', marker='.', label='k')
-    plt.scatter(x_values, bias_theta, c='blue', marker='.', label='theta')
+    # Bias plotten voor k
+    plt.scatter(x_values, bias_k_MM, c='red', marker='.', label='MM')
+    plt.scatter(x_values, bias_k_MLLH, c='blue', marker='.', label='MLLH')
     plt.xlabel('N iteraties'), plt.ylabel('Bias')
-    plt.title('Bias' + methode)
+    plt.title('Bias k')
     plt.legend(loc='upper right')
-    plt.savefig("plots/Bias_{}.pdf".format(methode), bbox_inches="tight")
+    plt.savefig("plots/Bias_k.pdf", bbox_inches="tight")
     plt.clf()
 
-    # Variantie plotten
-    plt.scatter(x_values, var_k, c='red', marker='.', label='k')
-    plt.scatter(x_values, var_theta, c='blue', marker='.', label='theta')
-    plt.xlabel('N iteraties'), plt.ylabel('Variantie')
-    plt.title('Variantie ' + methode)
+    # Bias plotten voor theta
+    plt.scatter(x_values, bias_theta_MM, c='red', marker='.', label='MM')
+    plt.scatter(x_values, bias_theta_MLLH, c='blue', marker='.', label='MLLH')
+    plt.xlabel('N iteraties'), plt.ylabel('Bias')
+    plt.title('Bias theta')
     plt.legend(loc='upper right')
-    plt.savefig("plots/Variantie_{}.pdf".format(methode), bbox_inches="tight")
+    plt.savefig("plots/Bias_theta.pdf", bbox_inches="tight")
+    plt.clf()
+
+    # Variantie plotten voor k
+    plt.scatter(x_values, var_k_MM, c='red', marker='.', label='MM')
+    plt.scatter(x_values, var_k_MLLH, c='blue', marker='.', label='MLLH')
+    plt.xlabel('N iteraties'), plt.ylabel('Variantie')
+    plt.title('Variantie k')
+    plt.legend(loc='upper right')
+    plt.savefig("plots/Variantie_k.pdf", bbox_inches="tight")
+    plt.clf()
+
+    # Variantie plotten voor k
+    plt.scatter(x_values, var_theta_MM, c='red', marker='.', label='MM')
+    plt.scatter(x_values, var_theta_MLLH, c='blue', marker='.', label='MLLH')
+    plt.xlabel('N iteraties'), plt.ylabel('Variantie')
+    plt.title('Variantie theta')
+    plt.legend(loc='upper right')
+    plt.savefig("plots/Variantie_theta.pdf", bbox_inches="tight")
     plt.clf()
 
     # Covariantie plotten
-    plt.scatter(x_values, corr, c='red', marker='.')
+    plt.scatter(x_values, corr_MM, c='red', marker='.', label='MM')
+    plt.scatter(x_values, corr_MLLH, c='blue', marker='.', label='MLLH')
     plt.xlabel('N iteraties'), plt.ylabel('Correlatiecoëfficiënt')
-    plt.title('Correlatiecoëfficiënt ' + methode)
-    plt.savefig("plots/Correlatie_{}.pdf".format(methode), bbox_inches="tight")
+    plt.title('Correlatiecoëfficiënt')
+    plt.legend(loc='upper right')
+    plt.savefig("plots/Correlatie.pdf", bbox_inches="tight")
     plt.clf()
 
 
@@ -350,7 +374,6 @@ def vergelijk(schattingsmethods):
     tussen de geschatte waarde en de gebootstrapte waarde.
     :param schattingsmethods: De methode die gebruikt moet worden om de variantie en covariantie te bepalen.
     """
-
     # bepalen welke functie moet gebruikt worden om k en theta te bepalen alsook zijn variantie en covariantie
     if schattingsmethods == 'MM':
         schatters = schatters_MM
