@@ -15,7 +15,7 @@ Indeling .py bestand:
     5. bepalen van de covariantiematrix van de schattingsmethode
     6. bootstrappen
     7. vergelijken van de geschatte waarden t.o.v. de gebootstrapte waarden
-    8. run het script
+    8. runnen van het script
 """
 
 import numpy as np
@@ -28,8 +28,8 @@ import pickle
 
 """----- Constanten -----"""
 samples = np.loadtxt('./gamma_samples.dat')
-M = 1000
-N_START = 100
+M = 100
+N_START = 1000
 N_MAX = 100000
 
 
@@ -46,7 +46,7 @@ def main():
     """
     Hier wordt het script uitgevoerd. Datapunten worden opgeslaan via pickle. Als boostrappen False is worden deze
     niet opnieuw berekend.
-    Verder kan men in config kiezen om niet te plotten of de gebootstrapte varianties niet te vergelijken met de
+    Verder kan men in de config kiezen om niet te plotten of de gebootstrapte varianties niet te vergelijken met de
     geschatte varianties.
     """
     # Methode van de Momenten
@@ -88,7 +88,6 @@ def main():
         inputfile.close()
 
         plot(bootstrap_result_MM, bootstrap_result_MLLH)
-
 
 
 def timer(func):
