@@ -44,8 +44,8 @@ vergelijken = True
 
 def main():
     """
-    Hier wordt het script uitgevoerd. Datapunten worden opgeslaan via pickle. Als boostrappen False is worden deze
-    niet opnieuw berekend.
+    Hier wordt het script uitgevoerd. Datapunten worden opgeslaan via pickle. Als de boolean boostrappen False is
+    worden het bootstrappen niet opnieuw uitgevoerd.
     Verder kan men in de config kiezen om niet te plotten of de gebootstrapte varianties niet te vergelijken met de
     geschatte varianties.
     """
