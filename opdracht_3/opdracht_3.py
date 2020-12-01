@@ -9,12 +9,14 @@ import time
 
 
 SIZE = 100000
+N = 1000000
 u_samples = np.random.uniform(low=0.0, high=1.0, size=SIZE)  # u samples via uniforme verdeling
 
 "-----Config-----"
-HM_PUNTEN_PLOT = True
+HM_PUNTEN_PLOT = False
 HM_HIST = False
 HM_INV_CUM = False
+TOEVALSGETALLEN = True
 
 
 def main():
@@ -28,6 +30,10 @@ def main():
 
     if HM_INV_CUM:
         inv_cum()
+
+    if TOEVALSGETALLEN:
+        plot_2d_hist()
+        plot_2d_doorsnede()
 
 
 def timer(func):
@@ -134,6 +140,50 @@ def inv_cum():
 
     t = np.arange(0.0, 1.0, 0.001)
     plt.plot(t, f(t), linewidth=2.5, c='b')
+    plt.show()
+
+
+def rho(x):
+    return 0.25 * np.pi * x * np.cos(0.125 * np.pi * x**2)
+
+
+def rho_inv_cum(x):
+    return 2 * f_inv_cum(x)
+
+
+def toevalsgetallen(hist_type):
+    u_samples_2 = np.random.uniform(low=0.0, high=1.0, size=N)
+    theta_samples = np.random.uniform(low=0.0, high=2 * np.pi, size=N)
+    r_samples = rho_inv_cum(u_samples_2)
+
+    x_samples_2d = np.multiply(r_samples, np.cos(theta_samples))
+    y_samples_2d = np.multiply(r_samples, np.sin(theta_samples))
+
+    if hist_type == 'doorsnede':
+        hist_2d = np.histogram2d(x_samples_2d, y_samples_2d, bins=99, density=True)
+        return hist_2d, x_samples_2d
+    elif hist_type == 'colorplot':
+        return x_samples_2d, y_samples_2d
+
+
+def plot_2d_hist():
+    x_samples, y_samples = toevalsgetallen(hist_type='colorplot')
+    plt.hist2d(x_samples, y_samples, bins=99, cmap='viridis')
+    plt.title('2D histogram plot van x en y')
+    plt.xlabel('x'), plt.ylabel('y'),
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel('Counts')
+    plt.show()
+
+
+def plot_2d_doorsnede():
+    hist, r_samples = toevalsgetallen(hist_type='doorsnede')
+    bins_x, x_edges = hist[0][50], hist[1][:-1] / 2 + hist[1][1:] / 2
+    r_samples.sort()
+    rho_samples = rho(r_samples)
+    plt.xlabel('x'), plt.ylabel('waarde bin'), plt.title('2D doorsnede')
+    plt.plot(x_edges, bins_x, marker='.', linestyle=':')
+    plt.plot(r_samples, rho_samples)
     plt.show()
 
 
