@@ -11,7 +11,7 @@ Indeling .py bestand:
     1. constanten
     2. config
     3. main function
-    4. timing decorator
+    4. timer decorator
     5. hit or miss methode
     6. monte carlo
     7. toevalsgetallen
@@ -25,20 +25,20 @@ from matplotlib import rcParams
 import time
 
 "-----Constanten-----"
-SIZE = 100000
+SIZE = 50000
 N = 1000000
 
 
 "-----Config-----"
 rcParams.update({'font.size': 11})
 
-HM_PUNTEN_PLOT = False
+HM_PUNTEN_PLOT = True
 HM_HIST = False
 HM_INV_CUM = False
 
 MONTE_CARLO = False
 STRAT = False
-INT_FOUT = True
+INT_FOUT = False
 
 TOEVALSGETALLEN = False
 
@@ -143,8 +143,7 @@ def hx_triangular(x_samples):
     Een functie om hx te helpen berekenen voor een triangulaire verdeling.
     :param x_samples: Een array met de getrokken waarden
     """
-    hx = np.array([3.2 * x if x <= 0.75 else -9.6 * x + 9.6 for x in x_samples])
-    return hx
+    return np.array([3.2 * x if x <= 0.75 else -9.6 * x + 9.6 for x in x_samples])
 
 
 @timer
