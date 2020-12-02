@@ -307,24 +307,27 @@ def plot_integratie_fout(b, step):
         fouten_mt = np.append(fouten_mt, fout_integratie(b, i, 'monte carlo'))
         fouten_strat = np.append(fouten_strat, fout_integratie(b, i, 'stratificatie'))
 
-    # fit rechte op de loglog data
+    # converteer de data naar log data
     log_samples_n = np.log10(samples_n)
     log_fouten_mt = np.log10(fouten_mt)
     log_fouten_strat = np.log10(fouten_strat)
 
+    # bereken de lineaire fit
     coeff_mt = np.polyfit(log_samples_n, log_fouten_mt, 1)
     coeff_strat = np.polyfit(log_samples_n, log_fouten_strat, 1)
     polynomial_mt = np.poly1d(coeff_mt)
     polynomial_strat = np.poly1d(coeff_strat)
+    ys_mt = np.power(10, polynomial_mt(log_samples_n))
+    ys_strat = np.power(10, polynomial_strat(log_samples_n))
 
     print('lineaire fit monte carlo: f(x) =', polynomial_mt)
     print('lineaire fit stratificatie: f(x) =', polynomial_strat)
 
-    ys_mt = np.power(10, polynomial_mt(log_samples_n))
-    ys_strat = np.power(10, polynomial_strat(log_samples_n))
+    # plot de gefitte rechtes
     plt.plot(samples_n, ys_mt, label=str(polynomial_mt), ls=':', c='tab:blue')
     plt.plot(samples_n, ys_strat, label=str(polynomial_strat), ls=':', c='tab:orange')
 
+    # plot de punten
     plt.scatter(samples_n, fouten_mt, label='monte carlo', c='b', marker='+')
     plt.scatter(samples_n, fouten_strat, label='stratificatie', c='orangered', marker='x')
     plt.xscale('log')
