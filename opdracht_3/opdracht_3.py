@@ -49,22 +49,27 @@ def main():
     worden gerund.
     Voor de toevalsgetallen worden de functies uitgevoerd van 10E4 tot 10E8 zodat er een mooie evolutie te zien is.
     """
-    u_samples = np.random.uniform(low=0.0, high=1.0, size=SIZE)
+    # 1.1 genereren van random samples
+    np.random.uniform(low=0.0, high=1.0, size=SIZE)
 
+    # 1.1.1 Hit or miss
     if HM_PUNTEN_PLOT:
         plot_hit_or_miss_punten('uniform')
         plot_hit_or_miss_punten('triangulair')
 
+    # 1.1.2 inverse cumulatieve + histogram
+    if HM_INV_CUM:
+        inv_cum()
+
+    # 1.1.3 Hit or miss histogram
     if HM_HIST:
         plot_hit_or_miss_hist('uniform')
         plot_hit_or_miss_hist('triangulair')
 
-    if HM_INV_CUM:
-        inv_cum()
-
+    # 1.2.1 monte carlo methodes
     if MONTE_CARLO:
-        u1 = montecarlo(1, 100)
-        u2 = montecarlo(2, 100)
+        u1 = monte_carlo(1, 100)
+        u2 = monte_carlo(2, 100)
         print(u1, u2)
 
     if STRAT:
@@ -72,10 +77,12 @@ def main():
         u2 = stratificatie(2, 100)
         print(u1, u2)
 
+    # 1.2.2 Plotten van de foute op de monte carlo methodes
     if INT_FOUT:
-        plot_integratie_fout(1, steps=2)
-        plot_integratie_fout(2, steps=2)
+        plot_integratie_fout(1, step=2)
+        plot_integratie_fout(2, step=2)
 
+    # 1.3 2D toevalsgetallen
     if TOEVALSGETALLEN:
         n = int(10E8)
         global N
@@ -191,8 +198,25 @@ def plot_hit_or_miss_punten(verdeling):
     plt.legend(handles=[mpatches.Patch(color='green', label='Hit'),
                         mpatches.Patch(color='red', label='Miss'),
                         mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
-    plt.show()
     plt.savefig('./plots/hit_or_miss/punten_{}.pdf'.format(verdeling))
+    plt.clf()
+
+
+@timer
+def inv_cum():
+    """
+    Deze functie berekent en plot de histogram voor de inverse cummulatieve
+    """
+    u_samples = np.random.uniform(low=0.0, high=1.0, size=SIZE)
+    x_samples = f_inv_cum(u_samples)
+    plt.title('Inverse Cummulatieve'), plt.ylabel('f(x)'), plt.xlabel('x')
+    plt.legend(handles=[mpatches.Patch(color='orange', label='Histogram'),
+                        mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
+    plt.hist(x_samples, bins=50, density=True, color='tab:orange')
+
+    t = np.arange(0.0, 1.0, 0.001)
+    plt.plot(t, f(t), linewidth=2.5, c='b')
+    plt.savefig('./plots/hit_or_miss/inv_cum.pdf')
     plt.clf()
 
 
@@ -214,31 +238,29 @@ def plot_hit_or_miss_hist(verdeling):
     plt.clf()
 
 
-@timer
-def inv_cum():
-    u_samples = np.random.uniform(low=0.0, high=1.0, size=SIZE)
-    x_samples = f_inv_cum(u_samples)
-    plt.title('Inverse Cummulatieve'), plt.ylabel('f(x)'), plt.xlabel('x')
-    plt.legend(handles=[mpatches.Patch(color='orange', label='Histogram'),
-                        mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
-    plt.hist(x_samples, bins=50, density=True, color='tab:orange')
-
-    t = np.arange(0.0, 1.0, 0.001)
-    plt.plot(t, f(t), linewidth=2.5, c='b')
-    plt.savefig('./plots/hit_or_miss/inv_cum.pdf')
-    plt.clf()
+"""-----Monte carlo-----"""
 
 
-"""-----Montecarlo-----"""
-
-
-def montecarlo(b, n):
+def monte_carlo(b, n):
+    """
+    Deze functie voert de standaard monte carlo methode uit.
+    :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
+    :param n: Het aantal intervallen die we gebruiken.
+    :return: De numerieke benadering van het integraal voor bepaalde b en n
+    """
     xrand = np.array([np.random.uniform(0, b) for _ in range(n)])
     integral = sum(f(xrand))
     return b / float(n) * integral
 
 
 def stratificatie(b, n):
+    """
+    Deze functie voert de stratificatie methode uit. Het volledige gebied is niet in 2 opgedeeld maar in even en
+    oneven.
+    :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
+    :param n: Het aantal intervallen die we gebruiken.
+    :return: De numerieke benadering van het integraal voor bepaalde b en n
+    """
     xrand = np.array([np.random.uniform(0, b / 2) if i % 2 == 0
                       else np.random.uniform(b / 2, b)
                       for i in range(n)])
@@ -247,8 +269,17 @@ def stratificatie(b, n):
 
 
 def fout_integratie(b, n, methode):
-    if methode == 'montecarlo':
-        data = np.array([montecarlo(b, n) for _ in range(100)])
+    """
+    Deze functie zal de fout berekenen op de numerieke integratie voor een bepaalde n. Hiervoor wordt de integratie
+    voor deze n 100 keer uitgevoerd en wordt de standaarddeviatie berekend.
+
+    :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
+    :param n: Het aantal intervallen die we gebruiken.
+    :param methode: De integratiemethode, monte carlo of stratificatie
+    :return: de fout als float.
+    """
+    if methode == 'monte carlo':
+        data = np.array([monte_carlo(b, n) for _ in range(100)])
     elif methode == 'stratificatie':
         data = np.array([stratificatie(b, n) for _ in range(100)])
     else:
@@ -257,24 +288,31 @@ def fout_integratie(b, n, methode):
 
 
 @timer
-def plot_integratie_fout(b, steps):
+def plot_integratie_fout(b, step):
+    """
+    De monte carlo integratie wordt een aantal keer uitgevoerd voor logaritmische stappen tussen 4 en 40 00.
+    Telkens wordt de fout op de standaard monte carlo en de stratificatie geplot in functie van n.
+
+    :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
+    :param step: De logaritmische stappen. Het starpunt 4 wordt hiermee vermenigvuldigd.
+    """
     i = 4
     samples_n = np.array([])
     fouten_mt, fouten_strat = np.array([]), np.array([])
     while i < 40000:
-        i *= steps
+        i *= step
         samples_n = np.append(samples_n, i)
-        fouten_mt = np.append(fouten_mt, fout_integratie(b, i, 'montecarlo'))
+        fouten_mt = np.append(fouten_mt, fout_integratie(b, i, 'monte carlo'))
         fouten_strat = np.append(fouten_strat, fout_integratie(b, i, 'stratificatie'))
 
-    plt.scatter(samples_n, fouten_mt, label='montecarlo', c='b', marker='+')
-    plt.scatter(samples_n, fouten_strat, label='montecarlo', c='tab:orange', marker='x')
+    plt.scatter(samples_n, fouten_mt, label='monte carlo', c='b', marker='+')
+    plt.scatter(samples_n, fouten_strat, label='monte carlo', c='tab:orange', marker='x')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('N'), plt.ylabel('Fout')
     plt.title('De fout op de integratie van 0 tot {}'.format(b))
     plt.legend()
-    plt.savefig('./plots/montecarlo/integratie_b={}.pdf'.format(b))
+    plt.savefig('./plots/monte_carlo/integratie_b={}.pdf'.format(b))
     plt.clf()
 
 
@@ -282,34 +320,48 @@ def plot_integratie_fout(b, steps):
 
 
 def rho(x):
+    """
+    De functie voor rho.
+    :param x: Een array met de getrokken waarden
+    """
     return 0.25 * np.pi * x * np.cos(0.125 * np.pi * x**2)
 
 
 def rho_herschaald(x):
+    """
+    De herschaalde functie voor rho.
+    :param x: Een array met de getrokken waarden
+    """
     return 0.125 * np.cos(0.125 * np.pi * x**2)
 
 
 def rho_inv_cum(x):
+    """
+    Deinverse cummulatieve van rho.
+    :param x: Een array met de getrokken waarden
+    """
     return 2 * f_inv_cum(x)
 
 
-def toevalsgetallen(hist_type):
+def toevalsgetallen():
+    """
+    Deze funcite berekend de 2D toevalsgetallen. Samples worden getrokken voor r en theta en dan omgerekend naar x en y.
+    :return: de samples voor x en y omgerekend uit r en theta
+    """
     u_samples = np.random.uniform(low=0.0, high=1.0, size=N)
     theta_samples = np.random.uniform(low=0.0, high=2 * np.pi, size=N)
     r_samples = rho_inv_cum(u_samples)
 
     x_samples_2d = np.multiply(r_samples, np.cos(theta_samples))
     y_samples_2d = np.multiply(r_samples, np.sin(theta_samples))
-
-    if hist_type == 'doorsnede':
-        hist_2d = np.histogram2d(x_samples_2d, y_samples_2d, bins=99, density=True)
-        return hist_2d, x_samples_2d
-    elif hist_type == 'colorplot':
-        return x_samples_2d, y_samples_2d
+    return x_samples_2d, y_samples_2d
 
 
 def plot_2d_hist():
-    x_samples, y_samples = toevalsgetallen(hist_type='colorplot')
+    """
+    Deze functie zal het 2D histogram plotten door gebruik te maken van kleuren.
+    """
+    x_samples, y_samples = toevalsgetallen()
     plt.hist2d(x_samples, y_samples, bins=99, cmap='viridis')
     plt.title('2D histogram plot van x en y')
     plt.xlabel('x'), plt.ylabel('y'),
@@ -320,7 +372,15 @@ def plot_2d_hist():
 
 
 def plot_2d_doorsnede():
-    hist, r_samples = toevalsgetallen(hist_type='doorsnede')
+    """
+    Deze functie zal de doorsnede van het 2D histogram maken en plotten. Eerst wordt het 2D histogram gevormd via
+    numpy. Vervolgens trekken we er een doorsnede van bins uit (we trekken ze uit het midden). Ook worden de
+    edges bepaald. We gebruiken een simpele uitmiddeling door de edges en de omgekeerde lijst op te tellen en te delen
+    door 2.
+    Ten slotte wordt de theoretische functie en de benadering geplot.
+    """
+    r_samples, y_samples = toevalsgetallen()
+    hist = np.histogram2d(r_samples, y_samples, bins=99, density=True)
     bins_x, x_edges = hist[0][54], hist[1][:-1] / 2 + hist[1][1:] / 2
     r_samples.sort()
     rho_samples = rho_herschaald(r_samples)
