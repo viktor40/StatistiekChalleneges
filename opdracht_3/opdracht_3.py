@@ -32,15 +32,15 @@ N = 1000000
 "-----Config-----"
 rcParams.update({'font.size': 11})
 
-HM_PUNTEN_PLOT = True
+HM_PUNTEN_PLOT = False
 HM_HIST = False
 HM_INV_CUM = False
 
 MONTE_CARLO = False
 STRAT = False
-INT_FOUT = False
+INT_FOUT = True
 
-TOEVALSGETALLEN = True
+TOEVALSGETALLEN = False
 
 
 def main():
@@ -296,17 +296,37 @@ def plot_integratie_fout(b, step):
     :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
     :param step: De logaritmische stappen. Het starpunt 4 wordt hiermee vermenigvuldigd.
     """
-    i = 4
+    print(f'----- fouten op integratie voor b={b} -----')
+    i = 2
     samples_n = np.array([])
     fouten_mt, fouten_strat = np.array([]), np.array([])
     while i < 40000:
+        print('Vooruitgang: i =', i, 'met logaritmische stappen van:', step)
         i *= step
         samples_n = np.append(samples_n, i)
         fouten_mt = np.append(fouten_mt, fout_integratie(b, i, 'monte carlo'))
         fouten_strat = np.append(fouten_strat, fout_integratie(b, i, 'stratificatie'))
 
+    # fit rechte op de loglog data
+    log_samples_n = np.log10(samples_n)
+    log_fouten_mt = np.log10(fouten_mt)
+    log_fouten_strat = np.log10(fouten_strat)
+
+    coeff_mt = np.polyfit(log_samples_n, log_fouten_mt, 1)
+    coeff_strat = np.polyfit(log_samples_n, log_fouten_strat, 1)
+    polynomial_mt = np.poly1d(coeff_mt)
+    polynomial_strat = np.poly1d(coeff_strat)
+
+    print('lineaire fit monte carlo: f(x) =', polynomial_mt)
+    print('lineaire fit stratificatie: f(x) =', polynomial_strat)
+
+    ys_mt = np.power(10, polynomial_mt(log_samples_n))
+    ys_strat = np.power(10, polynomial_strat(log_samples_n))
+    plt.plot(samples_n, ys_mt, label=str(polynomial_mt), ls=':', c='tab:blue')
+    plt.plot(samples_n, ys_strat, label=str(polynomial_strat), ls=':', c='tab:orange')
+
     plt.scatter(samples_n, fouten_mt, label='monte carlo', c='b', marker='+')
-    plt.scatter(samples_n, fouten_strat, label='monte carlo', c='tab:orange', marker='x')
+    plt.scatter(samples_n, fouten_strat, label='stratificatie', c='orangered', marker='x')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('N'), plt.ylabel('Fout')
