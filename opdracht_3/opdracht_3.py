@@ -25,7 +25,7 @@ from matplotlib import rcParams
 import time
 
 "-----Constanten-----"
-SIZE = 50000
+SIZE = 100000
 N = 1000000
 
 
