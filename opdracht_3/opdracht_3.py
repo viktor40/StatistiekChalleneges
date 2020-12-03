@@ -33,14 +33,14 @@ N = 1000000
 rcParams.update({'font.size': 11})
 
 HM_PUNTEN_PLOT = True
-HM_HIST = False
-HM_INV_CUM = False
+HM_HIST = True
+HM_INV_CUM = True
 
-MONTE_CARLO = False
-STRAT = False
-INT_FOUT = False
+MONTE_CARLO = True
+STRAT = True
+INT_FOUT = True
 
-TOEVALSGETALLEN = False
+TOEVALSGETALLEN = True
 
 
 def main():
@@ -84,7 +84,7 @@ def main():
 
     # 1.3 2D toevalsgetallen
     if TOEVALSGETALLEN:
-        n = int(10E8)
+        n = int(10E4)
         global N
         while n <= 10E8:
             N = n
