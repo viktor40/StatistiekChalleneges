@@ -25,8 +25,8 @@ from matplotlib import rcParams
 import time
 
 "-----Constanten-----"
+# Stel het aantal punten in dat wordt gebruikt voor het trekken van random samples uit een verdeling bij hit or miss
 SIZE = 100000
-N = 1000000
 
 
 "-----Config-----"
@@ -85,11 +85,9 @@ def main():
     # 1.3 2D toevalsgetallen
     if TOEVALSGETALLEN:
         n = int(10E4)
-        global N
         while n <= 10E8:
-            N = n
-            plot_2d_hist()
-            plot_2d_doorsnede()
+            plot_2d_hist(n)
+            plot_2d_doorsnede(n)
             n *= 10
 
 
@@ -365,13 +363,13 @@ def rho_inv_cum(x):
     return 2 * f_inv_cum(x)
 
 
-def toevalsgetallen():
+def toevalsgetallen(n):
     """
     Deze funcite berekend de 2D toevalsgetallen. Samples worden getrokken voor r en theta en dan omgerekend naar x en y.
     :return: de samples voor x en y omgerekend uit r en theta
     """
-    u_samples = np.random.uniform(low=0.0, high=1.0, size=N)
-    theta_samples = np.random.uniform(low=0.0, high=2 * np.pi, size=N)
+    u_samples = np.random.uniform(low=0.0, high=1.0, size=n)
+    theta_samples = np.random.uniform(low=0.0, high=2 * np.pi, size=n)
     r_samples = rho_inv_cum(u_samples)
 
     x_samples_2d = np.multiply(r_samples, np.cos(theta_samples))
@@ -379,21 +377,21 @@ def toevalsgetallen():
     return x_samples_2d, y_samples_2d
 
 
-def plot_2d_hist():
+def plot_2d_hist(n):
     """
     Deze functie zal het 2D histogram plotten door gebruik te maken van kleuren.
     """
-    x_samples, y_samples = toevalsgetallen()
+    x_samples, y_samples = toevalsgetallen(n)
     plt.hist2d(x_samples, y_samples, bins=99, cmap='viridis')
     plt.title('2D histogram plot van x en y')
     plt.xlabel('x'), plt.ylabel('y'),
     cbar = plt.colorbar()
     cbar.ax.set_ylabel('Counts')
-    plt.savefig('./plots/toevalsgetallen/2d_hist_N={}.pdf'.format(N))
+    plt.savefig('./plots/toevalsgetallen/2d_hist_N={}.pdf'.format(n))
     plt.clf()
 
 
-def plot_2d_doorsnede():
+def plot_2d_doorsnede(n):
     """
     Deze functie zal de doorsnede van het 2D histogram maken en plotten. Eerst wordt het 2D histogram gevormd via
     numpy. Vervolgens trekken we er een doorsnede van bins uit (we trekken ze uit het midden). Ook worden de
@@ -401,7 +399,7 @@ def plot_2d_doorsnede():
     door 2.
     Ten slotte wordt de theoretische functie en de benadering geplot.
     """
-    r_samples, y_samples = toevalsgetallen()
+    r_samples, y_samples = toevalsgetallen(n)
     hist = np.histogram2d(r_samples, y_samples, bins=99, density=True)
     bins_x, x_edges = hist[0][54], hist[1][:-1] / 2 + hist[1][1:] / 2
     r_samples.sort()
@@ -409,7 +407,7 @@ def plot_2d_doorsnede():
     plt.xlabel('x'), plt.ylabel('waarde bin'), plt.title('2D doorsnede')
     plt.plot(x_edges, bins_x, marker='.', linestyle=':')
     plt.plot(r_samples, rho_samples)
-    plt.savefig('./plots/toevalsgetallen/doorsnede_N={}.pdf'.format(N))
+    plt.savefig('./plots/toevalsgetallen/doorsnede_N={}.pdf'.format(n))
     plt.clf()
 
 
