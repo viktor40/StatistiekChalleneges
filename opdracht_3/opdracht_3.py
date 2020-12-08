@@ -38,9 +38,9 @@ HM_HIST = False
 HM_INV_CUM = False
 
 # 1.2
-MONTE_CARLO = True
-STRAT = True
-INT_FOUT = False
+MONTE_CARLO = False
+STRAT = False
+INT_FOUT = True
 
 # 1.3
 TOEVALSGETALLEN = False
@@ -107,15 +107,10 @@ def timer(func):
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
-
-        param = ''
-        if args:
-            for arg in args:
-                param += str(arg) + ', '
+        param = ', '.join(map(str, args))
 
         print(('Het duurde {}s om de functie "{}" uit te voeren. '
-               'De functie had de argumenten: "{}"').format(end_time - start_time, func.__name__,
-                                                            param[:-2] if param else None))
+               'De functie had de argumenten: "{}"').format(end_time - start_time, func.__name__, param))
         return result
     return wrapper
 
@@ -144,6 +139,7 @@ def hx_triangular(x_samples):
     Als x kleiner is dan dit, dan kan de linker zijde van de driehoek benaderd worden door de functie f(x) = 3.2 * x.
     Als x groter is dan 0.75 wordt de rechter zijde benaderd door: f(x) = -9.6 * x + 9.6.
     Dit wordt op de dataset uitgevoerd zonder for-loops door np.where te gebruiken.
+
     :return: Een array met hierin de waarde van de driehoek die de functie benaderd, voor een bepaalde x-waarde.
     """
     return np.where(x_samples <= 0.75, 3.2 * x_samples, -9.6 * x_samples + 9.6)
@@ -153,7 +149,8 @@ def hx_triangular(x_samples):
 def hit_or_miss(verdeling):
     """
     Deze functie past de hit and miss methode toe. Eerst worden er samples getrokken afhankelijk van de verdeling.
-    Erna wordt er gekeken of het punt een hit of een miss is. Ten slotte wordt de efficientie nog berekend
+    Erna wordt er gekeken of het punt een hit of een miss is. Ten slotte wordt de efficientie nog berekend.
+
     :param verdeling: Het type verdeling die we gebruiken voor de hit and miss. Dit is uniform of triangulair.
     :return: de x en y coordinaten voor de hits en misses
     """
@@ -239,47 +236,60 @@ def inv_cum():
 """-----Monte carlo-----"""
 
 
-def monte_carlo(b, n):
+def monte_carlo(b, n, n_values=1):
     """
     Deze functie voert de standaard monte carlo methode uit.
+    Verder kan er gekozen worden hoeveel keer we de methode willen uitvoeren, i.e. hoeveel uitkomsten we willen
+    genereren via deze methode.
+
     :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
     :param n: Het aantal intervallen die we gebruiken.
+    :param n_values: Het aantal keer dat je een oplossing wil zoeken voor de integraal
     :return: De numerieke benadering van het integraal voor bepaalde b en n
     """
-    xrand = np.random.uniform(0, b, (1, n))
-    integral = np.sum(f(xrand))
+    xrand = np.random.uniform(0, b, (n_values, n))
+    integral = np.sum(f(xrand), axis=1)
     return b/n * integral
 
 
-def stratificatie(b, n):
+def stratificatie(b, n, n_values=1):
     """
-    Deze functie voert de stratificatie methode uit. Het volledige gebied is niet in 2 opgedeeld maar in even en
-    oneven.
+    Deze functie voert de stratificatie methode uit. Voor de stratificatie werd het gebied in 2 gedeeld. Van 0 tot b/2
+    en van b/2 tot b.
+    Verder kan er gekozen worden hoeveel keer we de methode willen uitvoeren, i.e. hoeveel uitkomsten we willen
+    genereren via deze methode.
+
     :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
     :param n: Het aantal intervallen die we gebruiken.
+    :param n_values: Het aantal keer dat je een oplossing wil zoeken voor de integraal
     :return: De numerieke benadering van het integraal voor bepaalde b en n
     """
-    x_low = np.random.uniform(0, b/2, (1, int(np.floor(n/2))))
-    x_high = np.random.uniform(b/2, b, (1, int(np.floor(n/2))))
+    x_low = np.random.uniform(0, b/2, (n_values, int(np.floor(n/2))))
+    x_high = np.random.uniform(b/2, b, (n_values, int(np.floor(n/2))))
     xrand = np.concatenate((x_low, x_high), axis=1)
-    integral = np.sum(f(xrand))
+    integral = np.sum(f(xrand), axis=1)
     return b/n * integral
 
 
 def fout_integratie(b, n, methode):
     """
     Deze functie zal de fout berekenen op de numerieke integratie voor een bepaalde n. Hiervoor wordt de integratie
-    voor deze n 100 keer uitgevoerd en wordt de standaarddeviatie berekend.
+    voor deze n, 100 keer uitgevoerd en wordt de standaarddeviatie berekend.
+
+    Het aantal keer dat de integratie wordt uitgevoerd is direct geïntegreerd in de functie om de monte carlo
+    of stratificatie methode toe te passen. Dit doen idpv een for loop te gebruiken heeft de performantie van
+    plot_integratie_fout enorm veel verbeterd.
 
     :param b: De bovengrens van het integraal, 1 of 2. De ondergrens is altijd 0.
     :param n: Het aantal intervallen die we gebruiken.
+    :param: repeats: Het aantal keer dat de monte carlo integratie wordt gebruikt om de fout te bepalen
     :param methode: De integratiemethode, monte carlo of stratificatie
     :return: de fout als float.
     """
     if methode == 'monte carlo':
-        data = np.array([monte_carlo(b, n) for _ in range(100)])
+        data = monte_carlo(b, n, 100)
     elif methode == 'stratificatie':
-        data = np.array([stratificatie(b, n) for _ in range(100)])
+        data = stratificatie(b, n, 100)
     else:
         raise Exception('Verkeerde Integratiemethode')
     return float(np.std(data))
