@@ -342,13 +342,6 @@ def plot_integratie_fout(b, step):
 
 def rho(x):
     """
-    De functie voor rho.
-    """
-    return 0.25 * np.pi * x * np.cos(0.125 * np.pi * x**2)
-
-
-def rho_beter(x):
-    """
     De veranderde functie voor rho die de 2D doorsnede wel benaderd.
     """
     return 0.125 * np.cos(0.125 * np.pi * x**2)
@@ -400,7 +393,7 @@ def plot_2d_doorsnede(n):
     hist = np.histogram2d(r_samples, y_samples, bins=99, density=True)
     bins_x, x_edges = hist[0][54], hist[1][:-1] / 2 + hist[1][1:] / 2
     r_samples.sort()
-    rho_samples = rho_beter(r_samples)
+    rho_samples = rho(r_samples)
     plt.xlabel('x'), plt.ylabel('waarde bin'), plt.title('2D doorsnede')
     plt.plot(x_edges, bins_x, marker='.', linestyle=':')
     plt.plot(r_samples, rho_samples)
