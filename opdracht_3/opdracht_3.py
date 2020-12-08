@@ -26,20 +26,23 @@ import time
 
 "-----Constanten-----"
 # Stel het aantal punten in dat wordt gebruikt voor het trekken van random samples uit een verdeling bij hit or miss
-SIZE = 100000
+SIZE = 50000
 
 
 "-----Config-----"
 rcParams.update({'font.size': 11})
 
+# 1.1
 HM_PUNTEN_PLOT = True
 HM_HIST = True
 HM_INV_CUM = True
 
+# 1.2
 MONTE_CARLO = True
 STRAT = True
 INT_FOUT = True
 
+# 1.3
 TOEVALSGETALLEN = True
 
 
@@ -68,13 +71,13 @@ def main():
 
     # 1.2.1 monte carlo methodes
     if MONTE_CARLO:
-        u1 = monte_carlo(1, 100)
-        u2 = monte_carlo(2, 100)
+        u1 = monte_carlo(1, 1000000)
+        u2 = monte_carlo(2, 1000000)
         print(u1, u2)
 
     if STRAT:
-        u1 = stratificatie(1, 100)
-        u2 = stratificatie(2, 100)
+        u1 = stratificatie(1, 1000000)
+        u2 = stratificatie(2, 1000000)
         print(u1, u2)
 
     # 1.2.2 Plotten van de foute op de monte carlo methodes
@@ -96,7 +99,7 @@ def timer(func):
     Een decorator om de performantie van een functie te testen. Deze functie neemt een andere functie als argument,
     voert de functie uit en print de tijd dat het duurde om deze uit te voeren. We printen er ook de parameters om
     zeker te zijn welke methode er werd gebruikt.
-
+    
     :param func: De functie waarvan we de performantie willen testen.
     """
 
@@ -347,7 +350,7 @@ def rho(x):
     return 0.25 * np.pi * x * np.cos(0.125 * np.pi * x**2)
 
 
-def rho_herschaald(x):
+def rho_beter(x):
     """
     De herschaalde functie voor rho.
     :param x: Een array met de getrokken waarden
@@ -369,7 +372,7 @@ def toevalsgetallen(n):
     :return: de samples voor x en y omgerekend uit r en theta
     """
     u_samples = np.random.uniform(low=0.0, high=1.0, size=n)
-    theta_samples = np.random.uniform(low=0.0, high=2 * np.pi, size=n)
+    theta_samples = np.random.uniform(low=0.0, high=2*np.pi, size=n)
     r_samples = rho_inv_cum(u_samples)
 
     x_samples_2d = np.multiply(r_samples, np.cos(theta_samples))
@@ -403,7 +406,7 @@ def plot_2d_doorsnede(n):
     hist = np.histogram2d(r_samples, y_samples, bins=99, density=True)
     bins_x, x_edges = hist[0][54], hist[1][:-1] / 2 + hist[1][1:] / 2
     r_samples.sort()
-    rho_samples = rho_herschaald(r_samples)
+    rho_samples = rho_beter(r_samples)
     plt.xlabel('x'), plt.ylabel('waarde bin'), plt.title('2D doorsnede')
     plt.plot(x_edges, bins_x, marker='.', linestyle=':')
     plt.plot(r_samples, rho_samples)
