@@ -33,13 +33,13 @@ SIZE = 50000
 rcParams.update({'font.size': 11})
 
 # 1.1
-HM_PUNTEN_PLOT = True
-HM_HIST = True
-HM_INV_CUM = True
+HM_PUNTEN_PLOT = False
+HM_HIST = False
+HM_INV_CUM = False
 
 # 1.2
-MONTE_CARLO = True
-STRAT = True
+MONTE_CARLO = False
+STRAT = False
 INT_FOUT = True
 
 # 1.3
@@ -71,13 +71,13 @@ def main():
 
     # 1.2.1 monte carlo methodes
     if MONTE_CARLO:
-        u1 = monte_carlo(1, 1000000)
-        u2 = monte_carlo(2, 1000000)
+        u1 = monte_carlo(1, 100)
+        u2 = monte_carlo(2, 100)
         print(u1, u2)
 
     if STRAT:
-        u1 = stratificatie(1, 1000000)
-        u2 = stratificatie(2, 1000000)
+        u1 = stratificatie(1, 100)
+        u2 = stratificatie(2, 100)
         print(u1, u2)
 
     # 1.2.2 Plotten van de foute op de monte carlo methodes
@@ -225,7 +225,7 @@ def inv_cum():
     """
     u_samples = np.random.uniform(low=0.0, high=1.0, size=SIZE)
     x_samples = f_inv_cum(u_samples)
-    plt.title('Inverse Cummulatieve'), plt.ylabel('f(x)'), plt.xlabel('x')
+    plt.title('Inverse Cumulatieve'), plt.ylabel('f(x)'), plt.xlabel('x')
     plt.legend(handles=[mpatches.Patch(color='orange', label='Histogram'),
                         mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
     plt.hist(x_samples, bins=50, density=True, color='tab:orange')
@@ -259,7 +259,7 @@ def stratificatie(b, n):
     :param n: Het aantal intervallen die we gebruiken.
     :return: De numerieke benadering van het integraal voor bepaalde b en n
     """
-    xrand = np.array([np.random.uniform(0, b / 2) if i % 2 == 0
+    xrand = np.array([np.random.uniform(0, b / 2) if i <= n/2
                       else np.random.uniform(b / 2, b)
                       for i in range(n)])
     integral = sum(f(xrand))
