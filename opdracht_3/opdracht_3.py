@@ -18,10 +18,10 @@ Indeling .py bestand:
     8. run het script
 """
 
-import matplotlib.patches as mpatches
-import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from matplotlib import rcParams
+import numpy as np
 import time
 
 "-----Constanten-----"
@@ -43,7 +43,7 @@ STRAT = True
 INT_FOUT = True
 
 # 1.3
-TOEVALSGETALLEN = True
+TOEVALSGETALLEN = False
 
 
 def main():
@@ -126,7 +126,6 @@ def timer(func):
 def f(x):
     """
     De functie uit de opgave
-    :param x: Een array met de getrokken waarden
     """
     return np.pi * x * np.cos((np.pi / 2) * x ** 2)
 
@@ -134,7 +133,6 @@ def f(x):
 def f_inv_cum(x):
     """
     De inverse cummulatieve van de functie uit de opgave
-    :param x: Een array met de getrokken waarden
     """
     return np.sqrt((2 / np.pi) * np.arcsin(x))
 
@@ -142,9 +140,13 @@ def f_inv_cum(x):
 def hx_triangular(x_samples):
     """
     Een functie om hx te helpen berekenen voor een triangulaire verdeling.
-    :param x_samples: Een array met de getrokken waarden
+    De top van de driehoek is bij x = 0.75.
+    Als x kleiner is dan dit, dan kan de linker zijde van de driehoek benaderd worden door de functie f(x) = 3.2 * x.
+    Als x groter is dan 0.75 wordt de rechter zijde benaderd door: f(x) = -9.6 * x + 9.6.
+    Dit wordt op de dataset uitgevoerd zonder for-loops door np.where te gebruiken.
+    :return: Een array met hierin de waarde van de driehoek die de functie benaderd, voor een bepaalde x-waarde.
     """
-    return np.array([3.2 * x if x <= 0.75 else -9.6 * x + 9.6 for x in x_samples])
+    return np.where(x_samples <= 0.75, 3.2 * x_samples, -9.6 * x_samples + 9.6)
 
 
 @timer
@@ -169,12 +171,10 @@ def hit_or_miss(verdeling):
     # pas de functie toe
     y_functie = f(x_samples)
 
-    y_hit, x_hit, x_miss, y_miss = [], [], [], []
-    for n in range(len(x_samples)):
-        if y_samples[n] <= y_functie[n]:
-            x_hit.append(x_samples[n]), y_hit.append(y_samples[n])
-        else:
-            x_miss.append(x_samples[n]), y_miss.append(y_samples[n])
+    x_hit = x_samples[y_samples <= y_functie]
+    x_miss = x_samples[y_samples > y_functie]
+    y_hit = y_samples[y_samples <= y_functie]
+    y_miss = y_samples[y_samples > y_functie]
 
     # efficientie
     print('efficientie = ', len(x_hit) / SIZE)
@@ -194,11 +194,27 @@ def plot_hit_or_miss_punten(verdeling):
     plt.plot(x, f(x), linewidth=2.5, c='b')
     plt.title('Hit or Miss {}'.format(verdeling))
     plt.xlabel('x'), plt.ylabel('f(x)')
-    plt.grid()
     plt.legend(handles=[mpatches.Patch(color='green', label='Hit'),
                         mpatches.Patch(color='red', label='Miss'),
                         mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
     plt.savefig('./plots/hit_or_miss/punten_{}.pdf'.format(verdeling))
+    plt.clf()
+
+
+def plot_hit_or_miss_hist(verdeling):
+    """
+    Deze functie plot een histogram van de hit or miss methode
+    :param verdeling: Het type verdeling die we gebruiken voor de hit or miss. Dit is uniform of triangulair.
+    """
+    x_hit, y_hit, x_miss, y_miss = hit_or_miss(verdeling)
+    plt.hist(x_hit, bins=50, density=True, color='tab:orange')
+    x = np.arange(0.0, 1.0, 0.001)
+    plt.plot(x, f(x), linewidth=2.5, c='b')
+    plt.title('Hit or Miss {} histogram'.format(verdeling, ))
+    plt.xlabel('x'), plt.ylabel('f(x)')
+    plt.legend(handles=[mpatches.Patch(color='orange', label='Histogram'),
+                        mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
+    plt.savefig('./plots/hit_or_miss/histogram_{}.pdf'.format(verdeling))
     plt.clf()
 
 
@@ -217,24 +233,6 @@ def inv_cum():
     t = np.arange(0.0, 1.0, 0.001)
     plt.plot(t, f(t), linewidth=2.5, c='b')
     plt.savefig('./plots/hit_or_miss/inv_cum.pdf')
-    plt.clf()
-
-
-def plot_hit_or_miss_hist(verdeling):
-    """
-    Deze functie plot een histogram van de hit or miss methode
-    :param verdeling: Het type verdeling die we gebruiken voor de hit or miss. Dit is uniform of triangulair.
-    """
-    x_hit, y_hit, x_miss, y_miss = hit_or_miss(verdeling)
-    plt.hist(x_hit, bins=50, density=True, color='tab:orange')
-    x = np.arange(0.0, 1.0, 0.001)
-    plt.plot(x, f(x), linewidth=2.5, c='b')
-    plt.title('Hit or Miss {} histogram'.format(verdeling, ))
-    plt.xlabel('x'), plt.ylabel('f(x)')
-    plt.grid()
-    plt.legend(handles=[mpatches.Patch(color='orange', label='Histogram'),
-                        mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
-    plt.savefig('./plots/hit_or_miss/histogram_{}.pdf'.format(verdeling))
     plt.clf()
 
 
@@ -345,23 +343,20 @@ def plot_integratie_fout(b, step):
 def rho(x):
     """
     De functie voor rho.
-    :param x: Een array met de getrokken waarden
     """
     return 0.25 * np.pi * x * np.cos(0.125 * np.pi * x**2)
 
 
 def rho_beter(x):
     """
-    De herschaalde functie voor rho.
-    :param x: Een array met de getrokken waarden
+    De veranderde functie voor rho die de 2D doorsnede wel benaderd.
     """
     return 0.125 * np.cos(0.125 * np.pi * x**2)
 
 
 def rho_inv_cum(x):
     """
-    Deinverse cummulatieve van rho.
-    :param x: Een array met de getrokken waarden
+    De inverse cummulatieve van rho.
     """
     return 2 * f_inv_cum(x)
 
