@@ -12,7 +12,7 @@ Indeling .py bestand:
     2. config
     3. main function
     4. timer decorator
-    5. hit or miss methode
+    5. hit and miss methode
     6. monte carlo
     7. toevalsgetallen
     8. run het script
@@ -25,7 +25,7 @@ import numpy as np
 import time
 
 "-----Constanten-----"
-# Stel het aantal punten in dat wordt gebruikt voor het trekken van random samples uit een verdeling bij hit or miss
+# Stel het aantal punten in dat wordt gebruikt voor het trekken van random samples uit een verdeling bij hit and miss
 SIZE = 50000
 
 
@@ -38,9 +38,9 @@ HM_HIST = False
 HM_INV_CUM = False
 
 # 1.2
-MONTE_CARLO = False
-STRAT = False
-INT_FOUT = True
+MONTE_CARLO = True
+STRAT = True
+INT_FOUT = False
 
 # 1.3
 TOEVALSGETALLEN = False
@@ -55,7 +55,7 @@ def main():
     # 1.1 genereren van random samples
     np.random.uniform(low=0.0, high=1.0, size=SIZE)
 
-    # 1.1.1 Hit or miss
+    # 1.1.1 Hit and miss
     if HM_PUNTEN_PLOT:
         plot_hit_or_miss_punten('uniform')
         plot_hit_or_miss_punten('triangulair')
@@ -64,7 +64,7 @@ def main():
     if HM_INV_CUM:
         inv_cum()
 
-    # 1.1.3 Hit or miss histogram
+    # 1.1.3 Hit and miss histogram
     if HM_HIST:
         plot_hit_or_miss_hist('uniform')
         plot_hit_or_miss_hist('triangulair')
@@ -120,7 +120,7 @@ def timer(func):
     return wrapper
 
 
-"""-----Hit Or Miss-----"""
+"""-----Hit and Miss-----"""
 
 
 def f(x):
@@ -152,9 +152,9 @@ def hx_triangular(x_samples):
 @timer
 def hit_or_miss(verdeling):
     """
-    Deze functie past de hit or miss methode toe. Eerst worden er samples getrokken afhankelijk van de verdeling.
+    Deze functie past de hit and miss methode toe. Eerst worden er samples getrokken afhankelijk van de verdeling.
     Erna wordt er gekeken of het punt een hit of een miss is. Ten slotte wordt de efficientie nog berekend
-    :param verdeling: Het type verdeling die we gebruiken voor de hit or miss. Dit is uniform of triangulair.
+    :param verdeling: Het type verdeling die we gebruiken voor de hit and miss. Dit is uniform of triangulair.
     :return: de x en y coordinaten voor de hits en misses
     """
     # random samples trekken
@@ -171,10 +171,10 @@ def hit_or_miss(verdeling):
     # pas de functie toe
     y_functie = f(x_samples)
 
-    x_hit = x_samples[y_samples <= y_functie]
-    x_miss = x_samples[y_samples > y_functie]
-    y_hit = y_samples[y_samples <= y_functie]
-    y_miss = y_samples[y_samples > y_functie]
+    # Door gebruik te maken van 'Fancy indexing' kunnen we het gebruik van for loops vermijden wanneer we bepalen of
+    # een bepaald punt een hit of een miss is.
+    x_hit, x_miss = x_samples[y_samples <= y_functie], x_samples[y_samples > y_functie]
+    y_hit, y_miss = y_samples[y_samples <= y_functie], y_samples[y_samples > y_functie]
 
     # efficientie
     print('efficientie = ', len(x_hit) / SIZE)
@@ -183,16 +183,16 @@ def hit_or_miss(verdeling):
 
 def plot_hit_or_miss_punten(verdeling):
     """
-    Deze functie plot een voorstelling van de hit or miss methode, waarbij de hits en misses zijn geplot alsook de
+    Deze functie plot een voorstelling van de hit and miss methode, waarbij de hits en misses zijn geplot alsook de
     functie.
-    :param verdeling: Het type verdeling die we gebruiken voor de hit or miss. Dit is uniform of triangulair.
+    :param verdeling: Het type verdeling die we gebruiken voor de hit and miss. Dit is uniform of triangulair.
     """
     x_hit, y_hit, x_miss, y_miss = hit_or_miss(verdeling)
     plt.plot(x_hit, y_hit, ',', label='x', c='g')
     plt.plot(x_miss, y_miss, ',', label='x', c='r')
     x = np.arange(0.0, 1.0, 0.001)
     plt.plot(x, f(x), linewidth=2.5, c='b')
-    plt.title('Hit or Miss {}'.format(verdeling))
+    plt.title('Hit and Miss {}'.format(verdeling))
     plt.xlabel('x'), plt.ylabel('f(x)')
     plt.legend(handles=[mpatches.Patch(color='green', label='Hit'),
                         mpatches.Patch(color='red', label='Miss'),
@@ -203,14 +203,14 @@ def plot_hit_or_miss_punten(verdeling):
 
 def plot_hit_or_miss_hist(verdeling):
     """
-    Deze functie plot een histogram van de hit or miss methode
-    :param verdeling: Het type verdeling die we gebruiken voor de hit or miss. Dit is uniform of triangulair.
+    Deze functie plot een histogram van de hit and miss methode
+    :param verdeling: Het type verdeling die we gebruiken voor de hit and miss. Dit is uniform of triangulair.
     """
     x_hit, y_hit, x_miss, y_miss = hit_or_miss(verdeling)
     plt.hist(x_hit, bins=50, density=True, color='tab:orange')
     x = np.arange(0.0, 1.0, 0.001)
     plt.plot(x, f(x), linewidth=2.5, c='b')
-    plt.title('Hit or Miss {} histogram'.format(verdeling, ))
+    plt.title('Hit and Miss {} histogram'.format(verdeling, ))
     plt.xlabel('x'), plt.ylabel('f(x)')
     plt.legend(handles=[mpatches.Patch(color='orange', label='Histogram'),
                         mpatches.Patch(color='blue', label='f(x)')], loc='upper right')
@@ -246,9 +246,9 @@ def monte_carlo(b, n):
     :param n: Het aantal intervallen die we gebruiken.
     :return: De numerieke benadering van het integraal voor bepaalde b en n
     """
-    xrand = np.array([np.random.uniform(0, b) for _ in range(n)])
-    integral = sum(f(xrand))
-    return b / float(n) * integral
+    xrand = np.random.uniform(0, b, (1, n))
+    integral = np.sum(f(xrand))
+    return b/n * integral
 
 
 def stratificatie(b, n):
@@ -259,11 +259,11 @@ def stratificatie(b, n):
     :param n: Het aantal intervallen die we gebruiken.
     :return: De numerieke benadering van het integraal voor bepaalde b en n
     """
-    xrand = np.array([np.random.uniform(0, b / 2) if i <= n/2
-                      else np.random.uniform(b / 2, b)
-                      for i in range(n)])
-    integral = sum(f(xrand))
-    return b / float(n) * integral
+    x_low = np.random.uniform(0, b/2, (1, int(np.floor(n/2))))
+    x_high = np.random.uniform(b/2, b, (1, int(np.floor(n/2))))
+    xrand = np.concatenate((x_low, x_high), axis=1)
+    integral = np.sum(f(xrand))
+    return b/n * integral
 
 
 def fout_integratie(b, n, methode):
@@ -369,7 +369,6 @@ def toevalsgetallen(n):
     u_samples = np.random.uniform(low=0.0, high=1.0, size=n)
     theta_samples = np.random.uniform(low=0.0, high=2*np.pi, size=n)
     r_samples = rho_inv_cum(u_samples)
-
     x_samples_2d = np.multiply(r_samples, np.cos(theta_samples))
     y_samples_2d = np.multiply(r_samples, np.sin(theta_samples))
     return x_samples_2d, y_samples_2d
