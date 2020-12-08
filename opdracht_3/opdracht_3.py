@@ -33,17 +33,17 @@ SIZE = 50000
 rcParams.update({'font.size': 11})
 
 # 1.1
-HM_PUNTEN_PLOT = False
-HM_HIST = False
-HM_INV_CUM = False
+HM_PUNTEN_PLOT = True
+HM_HIST = True
+HM_INV_CUM = True
 
 # 1.2
-MONTE_CARLO = False
-STRAT = False
+MONTE_CARLO = True
+STRAT = True
 INT_FOUT = True
 
 # 1.3
-TOEVALSGETALLEN = False
+TOEVALSGETALLEN = True
 
 
 def main():
@@ -82,8 +82,9 @@ def main():
 
     # 1.2.2 Plotten van de foute op de monte carlo methodes
     if INT_FOUT:
-        plot_integratie_fout(1, step=2)
-        plot_integratie_fout(2, step=2)
+        for i in range(31, 51):
+            plot_integratie_fout(i, step=2)
+        # plot_integratie_fout(20, step=2)
 
     # 1.3 2D toevalsgetallen
     if TOEVALSGETALLEN:
